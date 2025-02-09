@@ -21,10 +21,40 @@ func (r *Range) String() string {
 }
 
 type TurboSlice struct {
-	PSI    string
+	PSI    float64
 	Ranges []*Range
+}
+
+func NewTurboSlice(psi float64, ranges ...*Range) *TurboSlice {
+	return &TurboSlice{
+		PSI:    psi,
+		Ranges: ranges,
+	}
+}
+
+func (t *TurboSlice) String() string {
+	s := fmt.Sprintf("PSI: %.1f", t.PSI)
+	for _, r := range t.Ranges {
+		s += fmt.Sprintf(" %s", r)
+	}
+
+	return s
 }
 
 type Turbo struct {
 	Slices []*TurboSlice
+}
+
+func NewTurbo(slices ...*TurboSlice) *Turbo {
+	return &Turbo{
+		Slices: slices,
+	}
+}
+
+func (t *Turbo) String() string {
+	var s string
+	for _, r := range t.Slices {
+		s += fmt.Sprintf("%s\n", r)
+	}
+	return s
 }
