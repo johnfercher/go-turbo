@@ -12,7 +12,7 @@ func TestCFM_AddBoost(t *testing.T) {
 		cfm := ve.ToFourCylinderCFM(2)
 
 		// Act
-		cfm1KG := cfm.AddBoostKg(14.7)
+		cfm1KG := cfm.AddBoostKg(1)
 
 		// Assert
 		assert.Equal(t, cfm.RPM, cfm1KG.RPM)
