@@ -18,7 +18,7 @@ func NewVE(rpm float64, percent float64) *VE {
 }
 
 func (v *VE) String() string {
-	return fmt.Sprintf("RPM(%.0f)/VE(%.2f)", v.RPM, v.Percent)
+	return fmt.Sprintf("%.0f:%.2f", v.RPM, v.Percent)
 }
 
 func (v *VE) ToFourCylinderCFM(engineLiters float64) *CFM {

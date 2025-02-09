@@ -30,7 +30,7 @@ func NewEngine(name string, cylinders int, liters float64, ve []*VE) (*Engine, e
 	for _, boost := range consts.Boosts {
 		var cfm []*CFM
 		for _, v := range ve {
-			cfm = append(cfm, v.ToFourCylinderCFM(e.Liters))
+			cfm = append(cfm, v.ToFourCylinderCFM(e.Liters).AddBoostKg(boost))
 		}
 		e.CFM[fmt.Sprintf("%.2f", boost)] = cfm
 	}

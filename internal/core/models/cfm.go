@@ -12,7 +12,7 @@ type CFM struct {
 }
 
 func (c *CFM) String() string {
-	return fmt.Sprintf("RPM(%.0f)/VE(%.2f)/CFM(%.2f)", c.RPM, c.Percent, c.Flow)
+	return fmt.Sprintf("%.0f:%.2f~%.2f", c.RPM, c.Percent, c.Flow)
 }
 
 func (c *CFM) AddBoostKg(kg float64) *CFM {
