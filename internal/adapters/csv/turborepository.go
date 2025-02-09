@@ -58,32 +58,39 @@ func (t *TurboRepository) getSlices(arr []*TurboPressureDAOArray) map[string][]*
 
 		// Add base line, the better range
 		ranges = append(ranges, &models.Range{
-			Min:   GetFlowFromBaseRange(slice.Flow[base]),
-			Max:   GetFlowFromBaseRange(slice.Flow[base+1]),
-			Score: baseScore,
+			Min:    GetFlowFromBaseRange(slice.Flow[base]),
+			Max:    GetFlowFromBaseRange(slice.Flow[base+1]),
+			Health: baseScore,
+			Boost:  baseScore,
 		})
 
 		// Add bottom half
-		weightIterator := 1
-		for i := base; i > 1; i-- {
+		for i := base; i > 0; i-- {
 			ranges = append(ranges, &models.Range{
-				Min:   GetFlowFromBaseRange(slice.Flow[i-1]),
-				Max:   GetFlowFromBaseRange(slice.Flow[i]),
-				Score: baseScore + float64(weightIterator),
+				Min: GetFlowFromBaseRange(slice.Flow[i-1]),
+				Max: GetFlowFromBaseRange(slice.Flow[i]),
 			})
-			weightIterator++
 		}
 
+		// Surge bottom
+		ranges = append(ranges, &models.Range{
+			Min: 0,
+			Max: GetFlowFromBaseRange(slice.Flow[0]),
+		})
+
 		// Add top half
-		weightIterator = 1
 		for i := base; i < len(slice.Flow)-2; i++ {
 			ranges = append(ranges, &models.Range{
-				Min:   GetFlowFromBaseRange(slice.Flow[i+1]),
-				Max:   GetFlowFromBaseRange(slice.Flow[i+2]),
-				Score: baseScore + float64(weightIterator),
+				Min: GetFlowFromBaseRange(slice.Flow[i+1]),
+				Max: GetFlowFromBaseRange(slice.Flow[i+2]),
 			})
-			weightIterator++
 		}
+
+		// Choke top
+		ranges = append(ranges, &models.Range{
+			Min: GetFlowFromBaseRange(slice.Flow[len(slice.Flow)-1]),
+			Max: 10000,
+		})
 
 		ranges = sort.Merge(ranges)
 

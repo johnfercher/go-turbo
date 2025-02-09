@@ -15,7 +15,7 @@ func main() {
 
 	accelerator := services.NewAccelerator(engineRepo, turboRepo)
 
-	err := accelerator.Simulate(ctx, "ej20", "kinugawa-td05-18g", 0)
+	err := accelerator.Simulate(ctx, "ej20", "kinugawa-td05-18g", 1)
 	if err != nil {
 		log.Fatal(err)
 	}

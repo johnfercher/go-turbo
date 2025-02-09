@@ -3,7 +3,7 @@ package models
 import (
 	"errors"
 	"fmt"
-	"github.com/johnfercher/go-turbo/internal/core/consts"
+	"gonum.org/v1/gonum/interp"
 )
 
 type Engine struct {
@@ -11,7 +11,7 @@ type Engine struct {
 	Liters    float64
 	Cylinders int
 	VE        []*VE
-	CFM       map[string][]*CFM
+	VEInter   interp.AkimaSpline
 }
 
 func NewEngine(name string, cylinders int, liters float64, ve []*VE) (*Engine, error) {
@@ -20,19 +20,27 @@ func NewEngine(name string, cylinders int, liters float64, ve []*VE) (*Engine, e
 		Liters:    liters,
 		Cylinders: cylinders,
 		VE:        ve,
-		CFM:       make(map[string][]*CFM),
 	}
+
+	interp := interp.AkimaSpline{}
+
+	var xs []float64
+	var ys []float64
+
+	for _, v := range ve {
+		xs = append(xs, v.RPM)
+		ys = append(ys, v.Percent)
+	}
+
+	err := interp.Fit(xs, ys)
+	if err != nil {
+		return nil, err
+	}
+
+	e.VEInter = interp
 
 	if cylinders != 4 {
 		return nil, errors.New("cylinders != 4")
-	}
-
-	for _, boost := range consts.Boosts {
-		var cfm []*CFM
-		for _, v := range ve {
-			cfm = append(cfm, v.ToFourCylinderCFM(e.Liters).AddBoostKg(boost))
-		}
-		e.CFM[KgKey(boost)] = cfm
 	}
 
 	return e, nil
@@ -40,19 +48,13 @@ func NewEngine(name string, cylinders int, liters float64, ve []*VE) (*Engine, e
 
 func (e *Engine) String() string {
 	s := fmt.Sprintf("Engine: %s, %.2fL, %dC\n", e.Name, e.Liters, e.Cylinders)
-
-	for key, value := range e.CFM {
-		s += fmt.Sprintf("%s Kg %v\n", key, value)
-	}
+	s += fmt.Sprintf("VE: %v\n", e.VE)
 
 	return s
 }
 
-func (e *Engine) GetBoostCFM(boost float64) ([]*CFM, error) {
-	cfm, ok := e.CFM[KgKey(boost)]
-	if !ok {
-		return nil, errors.New("no CFM found for boost")
-	}
-
-	return cfm, nil
+func (e *Engine) Get(RPM float64, boost float64) *CFM {
+	percent := e.VEInter.Predict(RPM)
+	ve := NewVE(RPM, percent)
+	return ve.ToFourCylinderCFM(e.Liters).AddBoostKg(boost)
 }
