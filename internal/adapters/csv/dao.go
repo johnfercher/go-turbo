@@ -5,6 +5,12 @@ import (
 	"reflect"
 )
 
+type EngineDetails struct {
+	Name      string  `json:"name"`
+	Liters    float64 `json:"liters"`
+	Cylinders int     `json:"cylinders"`
+}
+
 type TurboPressureDAO struct {
 	PSI   string `csv:"psi"`
 	COL1  string `csv:"col1"`

@@ -46,6 +46,7 @@ func (t *TurboSlice) String() string {
 }
 
 type Turbo struct {
+	Name   string
 	Slices []*TurboSlice
 }
 
@@ -56,7 +57,7 @@ func NewTurbo(slices ...*TurboSlice) *Turbo {
 }
 
 func (t *Turbo) String() string {
-	var s string
+	s := fmt.Sprintf("Turbo: %s\n", t.Name)
 	for _, r := range t.Slices {
 		s += fmt.Sprintf("%s\n", r)
 	}

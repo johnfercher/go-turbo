@@ -3,7 +3,6 @@ package csv
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"github.com/gocarina/gocsv"
 	"github.com/johnfercher/go-turbo/internal/core/models"
 	"github.com/johnfercher/go-turbo/internal/core/sort"
@@ -33,13 +32,12 @@ func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Tu
 
 	valids := t.filterValids(entries)
 	arr := t.toArray(valids)
-
 	slices := t.getSlices(arr)
-	for _, slice := range slices {
-		fmt.Println(slice)
-	}
 
-	return nil, nil
+	return &models.Turbo{
+		Name:   turboFile,
+		Slices: slices,
+	}, nil
 }
 
 func (t *TurboRepository) getSlices(arr []*TurboPressureDAOArray) []*models.TurboSlice {
