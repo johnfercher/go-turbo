@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"github.com/gocarina/gocsv"
 	"github.com/johnfercher/go-turbo/internal/core/models"
+	"github.com/johnfercher/go-turbo/internal/core/sort"
 	"os"
+	"strconv"
+	"strings"
 )
 
 type TurboRepository struct {
@@ -31,9 +34,23 @@ func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Tu
 	valids := t.filterValids(entries)
 	arr := t.toArray(valids)
 
-	turbo := &models.Turbo{}
+	slices := t.getSlices(arr)
+	for _, slice := range slices {
+		fmt.Println(slice)
+	}
+
+	return nil, nil
+}
+
+func (t *TurboRepository) getSlices(arr []*TurboPressureDAOArray) []*models.TurboSlice {
+	var slices []*models.TurboSlice
 	for _, slice := range arr {
-		turboSlice := &models.TurboSlice{}
+		psi, _ := strconv.ParseFloat(strings.TrimSpace(slice.PSI), 64)
+		turboSlice := &models.TurboSlice{
+			PSI: psi,
+		}
+
+		// find base line, the better range
 		base := 0
 		for i, f := range slice.Flow {
 			if IsBaseRange(f) {
@@ -42,20 +59,43 @@ func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Tu
 			}
 		}
 
+		baseScore := GetScoreFromBaseRange(slice.Flow[base])
+
+		// Add base line, the better range
 		turboSlice.Ranges = append(turboSlice.Ranges, &models.Range{
 			Min:   GetFlowFromBaseRange(slice.Flow[base]),
 			Max:   GetFlowFromBaseRange(slice.Flow[base+1]),
-			Score: GetScoreFromBaseRange(slice.Flow[base]),
+			Score: baseScore,
 		})
 
-		turbo.Slices = append(turbo.Slices, turboSlice)
+		// Add bottom half
+		weightIterator := 1
+		for i := base; i > 1; i-- {
+			turboSlice.Ranges = append(turboSlice.Ranges, &models.Range{
+				Min:   GetFlowFromBaseRange(slice.Flow[i-1]),
+				Max:   GetFlowFromBaseRange(slice.Flow[i]),
+				Score: baseScore + float64(weightIterator),
+			})
+			weightIterator++
+		}
+
+		// Add top half
+		weightIterator = 1
+		for i := base; i < len(slice.Flow)-2; i++ {
+			turboSlice.Ranges = append(turboSlice.Ranges, &models.Range{
+				Min:   GetFlowFromBaseRange(slice.Flow[i+1]),
+				Max:   GetFlowFromBaseRange(slice.Flow[i+2]),
+				Score: baseScore + float64(weightIterator),
+			})
+			weightIterator++
+		}
+
+		turboSlice.Ranges = sort.Merge(turboSlice.Ranges)
+
+		slices = append(slices, turboSlice)
 	}
 
-	for _, slice := range turbo.Slices {
-		fmt.Println(slice)
-	}
-
-	return nil, nil
+	return slices
 }
 
 func (t *TurboRepository) toArray(valids []*TurboPressureDAO) []*TurboPressureDAOArray {

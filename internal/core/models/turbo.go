@@ -8,6 +8,10 @@ type Range struct {
 	Score float64
 }
 
+func (r Range) GreaterThan(a Range) bool {
+	return r.Min > a.Min
+}
+
 func NewRange(min, max, score float64) *Range {
 	return &Range{
 		Min:   min,
