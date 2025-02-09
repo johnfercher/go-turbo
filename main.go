@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"github.com/johnfercher/go-turbo/internal/adapters/csv"
+	"github.com/johnfercher/go-turbo/internal/core/services"
 	"log"
 )
 
@@ -13,17 +13,10 @@ func main() {
 	engineRepo := csv.NewEngineRepository()
 	turboRepo := csv.NewTurboRepository()
 
-	engine, err := engineRepo.Get(ctx, "ej20")
+	accelerator := services.NewAccelerator(engineRepo, turboRepo)
+
+	err := accelerator.Simulate(ctx, "ej20", "kinugawa-td05-18g", 0)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	fmt.Println(engine)
-
-	turbo, err := turboRepo.Get(ctx, "kinugawa-td05-18g")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println(turbo)
 }

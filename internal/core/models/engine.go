@@ -47,3 +47,12 @@ func (e *Engine) String() string {
 
 	return s
 }
+
+func (e *Engine) GetBoostCFM(boost float64) ([]*CFM, error) {
+	cfm, ok := e.CFM[fmt.Sprintf("%.2f", boost)]
+	if !ok {
+		return nil, errors.New("no CFM found for boost")
+	}
+
+	return cfm, nil
+}

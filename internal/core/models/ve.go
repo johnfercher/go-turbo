@@ -2,7 +2,7 @@ package models
 
 import (
 	"fmt"
-	"github.com/johnfercher/go-turbo/internal/core/math"
+	"github.com/johnfercher/go-turbo/internal/math"
 )
 
 type VE struct {

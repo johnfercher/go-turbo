@@ -56,7 +56,7 @@ func (t TurboPressureDAO) ToArray() *TurboPressureDAOArray {
 	arr := &TurboPressureDAOArray{}
 
 	for i := 0; i < tType.NumField(); i++ {
-		psi := tType.FieldByName("PSI")
+		psi := tType.FieldByName("Boost")
 		if psi.IsValid() {
 			arr.PSI = psi.String()
 		}

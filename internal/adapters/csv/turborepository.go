@@ -5,7 +5,7 @@ import (
 	"context"
 	"github.com/gocarina/gocsv"
 	"github.com/johnfercher/go-turbo/internal/core/models"
-	"github.com/johnfercher/go-turbo/internal/core/sort"
+	"github.com/johnfercher/go-turbo/internal/sort"
 	"os"
 	"strconv"
 	"strings"
@@ -45,7 +45,7 @@ func (t *TurboRepository) getSlices(arr []*TurboPressureDAOArray) []*models.Turb
 	for _, slice := range arr {
 		psi, _ := strconv.ParseFloat(strings.TrimSpace(slice.PSI), 64)
 		turboSlice := &models.TurboSlice{
-			PSI: psi,
+			Boost: psi,
 		}
 
 		// find base line, the better range

@@ -25,19 +25,19 @@ func (r *Range) String() string {
 }
 
 type TurboSlice struct {
-	PSI    float64
+	Boost  float64
 	Ranges []*Range
 }
 
 func NewTurboSlice(psi float64, ranges ...*Range) *TurboSlice {
 	return &TurboSlice{
-		PSI:    psi,
+		Boost:  psi,
 		Ranges: ranges,
 	}
 }
 
 func (t *TurboSlice) String() string {
-	s := fmt.Sprintf("%.2f Kg", t.PSI)
+	s := fmt.Sprintf("%.2f Kg", t.Boost)
 	for _, r := range t.Ranges {
 		s += fmt.Sprintf(" %s", r)
 	}
