@@ -37,7 +37,7 @@ func NewTurboSlice(psi float64, ranges ...*Range) *TurboSlice {
 }
 
 func (t *TurboSlice) String() string {
-	s := fmt.Sprintf("PSI: %.1f", t.PSI)
+	s := fmt.Sprintf("%.2f Kg", t.PSI)
 	for _, r := range t.Ranges {
 		s += fmt.Sprintf(" %s", r)
 	}

@@ -42,7 +42,7 @@ func (e *Engine) String() string {
 	s := fmt.Sprintf("Engine: %s, %.2fL, %dC\n", e.Name, e.Liters, e.Cylinders)
 
 	for key, value := range e.CFM {
-		s += fmt.Sprintf("Boost: %sKg %v\n", key, value)
+		s += fmt.Sprintf("%s Kg %v\n", key, value)
 	}
 
 	return s
