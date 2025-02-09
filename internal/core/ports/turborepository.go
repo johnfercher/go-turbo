@@ -1,7 +1,10 @@
 package ports
 
-import "context"
+import (
+	"context"
+	"github.com/johnfercher/go-turbo/internal/core/models"
+)
 
 type TurboRepository interface {
-	Get(ctx context.Context, turbo string) (string, error)
+	Get(ctx context.Context, turbo string) (*models.Turbo, error)
 }

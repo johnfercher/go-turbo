@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"github.com/johnfercher/go-turbo/internal/adapters"
+	"github.com/johnfercher/go-turbo/internal/adapters/csv"
 	"github.com/johnfercher/go-turbo/internal/core/models"
 	"log"
 )
@@ -14,7 +14,7 @@ const (
 func main() {
 	ctx := context.Background()
 
-	turboRepository := adapters.NewTurboCsvRepository()
+	turboRepository := csv.NewTurboRepository()
 	_, err := turboRepository.Get(ctx, "kinugawa-td05-18g")
 	if err != nil {
 		log.Fatal(err)
@@ -41,7 +41,7 @@ func main() {
 }
 
 func getEJ20CFMna(ctx context.Context) []*models.CFM {
-	veRepo := adapters.NewVECSVRepository()
+	veRepo := csv.NewVERepository()
 	ve, err := veRepo.Get(ctx, "ej20")
 	if err != nil {
 		log.Fatal(err)

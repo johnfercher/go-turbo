@@ -1,4 +1,4 @@
-package adapters
+package csv
 
 import (
 	"bytes"
@@ -8,14 +8,14 @@ import (
 	"os"
 )
 
-type VECSVRepository struct {
+type VERepository struct {
 }
 
-func NewVECSVRepository() *VECSVRepository {
-	return &VECSVRepository{}
+func NewVERepository() *VERepository {
+	return &VERepository{}
 }
 
-func (v *VECSVRepository) Get(ctx context.Context, engine string) ([]*models.VE, error) {
+func (v *VERepository) Get(ctx context.Context, engine string) ([]*models.VE, error) {
 	b, err := os.ReadFile("data/ve/" + engine + ".csv")
 	if err != nil {
 		return nil, err

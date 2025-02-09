@@ -10,3 +10,7 @@ type TurboSlice struct {
 	PSI    string
 	Ranges []Range
 }
+
+type Turbo struct {
+	Slices []TurboSlice
+}
