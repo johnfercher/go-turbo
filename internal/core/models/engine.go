@@ -32,7 +32,7 @@ func NewEngine(name string, cylinders int, liters float64, ve []*VE) (*Engine, e
 		for _, v := range ve {
 			cfm = append(cfm, v.ToFourCylinderCFM(e.Liters).AddBoostKg(boost))
 		}
-		e.CFM[fmt.Sprintf("%.2f", boost)] = cfm
+		e.CFM[KgKey(boost)] = cfm
 	}
 
 	return e, nil
@@ -49,7 +49,7 @@ func (e *Engine) String() string {
 }
 
 func (e *Engine) GetBoostCFM(boost float64) ([]*CFM, error) {
-	cfm, ok := e.CFM[fmt.Sprintf("%.2f", boost)]
+	cfm, ok := e.CFM[KgKey(boost)]
 	if !ok {
 		return nil, errors.New("no CFM found for boost")
 	}

@@ -24,10 +24,14 @@ func (a *Accelerator) Simulate(ctx context.Context, engineModel string, turboMod
 		return err
 	}
 
-	_, err = a.turboRepo.Get(ctx, turboModel)
+	fmt.Println(engine)
+
+	turbo, err := a.turboRepo.Get(ctx, turboModel)
 	if err != nil {
 		return err
 	}
+
+	fmt.Println(turbo)
 
 	cfm, err := engine.GetBoostCFM(boost)
 	if err != nil {

@@ -12,7 +12,7 @@ type EngineDetails struct {
 }
 
 type TurboPressureDAO struct {
-	PSI   string `csv:"psi"`
+	Kg    string `csv:"kg"`
 	COL1  string `csv:"col1"`
 	COL2  string `csv:"col2"`
 	COL3  string `csv:"col3"`
@@ -31,7 +31,7 @@ type TurboPressureDAO struct {
 }
 
 type TurboPressureDAOArray struct {
-	PSI  string
+	Kg   string
 	Flow []string
 }
 
@@ -56,9 +56,9 @@ func (t TurboPressureDAO) ToArray() *TurboPressureDAOArray {
 	arr := &TurboPressureDAOArray{}
 
 	for i := 0; i < tType.NumField(); i++ {
-		psi := tType.FieldByName("Boost")
+		psi := tType.FieldByName("Kg")
 		if psi.IsValid() {
-			arr.PSI = psi.String()
+			arr.Kg = psi.String()
 		}
 
 		col := tType.FieldByName(fmt.Sprintf("COL%d", i+1))

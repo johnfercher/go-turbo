@@ -40,13 +40,10 @@ func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Tu
 	}, nil
 }
 
-func (t *TurboRepository) getSlices(arr []*TurboPressureDAOArray) []*models.TurboSlice {
-	var slices []*models.TurboSlice
+func (t *TurboRepository) getSlices(arr []*TurboPressureDAOArray) map[string][]*models.Range {
+	slices := make(map[string][]*models.Range)
 	for _, slice := range arr {
-		psi, _ := strconv.ParseFloat(strings.TrimSpace(slice.PSI), 64)
-		turboSlice := &models.TurboSlice{
-			Boost: psi,
-		}
+		var ranges []*models.Range
 
 		// find base line, the better range
 		base := 0
@@ -60,7 +57,7 @@ func (t *TurboRepository) getSlices(arr []*TurboPressureDAOArray) []*models.Turb
 		baseScore := GetScoreFromBaseRange(slice.Flow[base])
 
 		// Add base line, the better range
-		turboSlice.Ranges = append(turboSlice.Ranges, &models.Range{
+		ranges = append(ranges, &models.Range{
 			Min:   GetFlowFromBaseRange(slice.Flow[base]),
 			Max:   GetFlowFromBaseRange(slice.Flow[base+1]),
 			Score: baseScore,
@@ -69,7 +66,7 @@ func (t *TurboRepository) getSlices(arr []*TurboPressureDAOArray) []*models.Turb
 		// Add bottom half
 		weightIterator := 1
 		for i := base; i > 1; i-- {
-			turboSlice.Ranges = append(turboSlice.Ranges, &models.Range{
+			ranges = append(ranges, &models.Range{
 				Min:   GetFlowFromBaseRange(slice.Flow[i-1]),
 				Max:   GetFlowFromBaseRange(slice.Flow[i]),
 				Score: baseScore + float64(weightIterator),
@@ -80,7 +77,7 @@ func (t *TurboRepository) getSlices(arr []*TurboPressureDAOArray) []*models.Turb
 		// Add top half
 		weightIterator = 1
 		for i := base; i < len(slice.Flow)-2; i++ {
-			turboSlice.Ranges = append(turboSlice.Ranges, &models.Range{
+			ranges = append(ranges, &models.Range{
 				Min:   GetFlowFromBaseRange(slice.Flow[i+1]),
 				Max:   GetFlowFromBaseRange(slice.Flow[i+2]),
 				Score: baseScore + float64(weightIterator),
@@ -88,9 +85,10 @@ func (t *TurboRepository) getSlices(arr []*TurboPressureDAOArray) []*models.Turb
 			weightIterator++
 		}
 
-		turboSlice.Ranges = sort.Merge(turboSlice.Ranges)
+		ranges = sort.Merge(ranges)
 
-		slices = append(slices, turboSlice)
+		kg, _ := strconv.ParseFloat(strings.TrimSpace(slice.Kg), 64)
+		slices[models.KgKey(kg)] = ranges
 	}
 
 	return slices

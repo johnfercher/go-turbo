@@ -24,42 +24,15 @@ func (r *Range) String() string {
 	return fmt.Sprintf("[%.0f-%.0f]%.0f", r.Min, r.Max, r.Score)
 }
 
-type TurboSlice struct {
-	Boost  float64
-	Ranges []*Range
-}
-
-func NewTurboSlice(psi float64, ranges ...*Range) *TurboSlice {
-	return &TurboSlice{
-		Boost:  psi,
-		Ranges: ranges,
-	}
-}
-
-func (t *TurboSlice) String() string {
-	s := fmt.Sprintf("%.2f Kg", t.Boost)
-	for _, r := range t.Ranges {
-		s += fmt.Sprintf(" %s", r)
-	}
-
-	return s
-}
-
 type Turbo struct {
 	Name   string
-	Slices []*TurboSlice
-}
-
-func NewTurbo(slices ...*TurboSlice) *Turbo {
-	return &Turbo{
-		Slices: slices,
-	}
+	Slices map[string][]*Range
 }
 
 func (t *Turbo) String() string {
 	s := fmt.Sprintf("Turbo: %s\n", t.Name)
-	for _, r := range t.Slices {
-		s += fmt.Sprintf("%s\n", r)
+	for key, value := range t.Slices {
+		s += fmt.Sprintf("%s Kg %s\n", key, value)
 	}
 	return s
 }
