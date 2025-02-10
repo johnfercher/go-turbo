@@ -31,7 +31,99 @@ func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Tu
 
 	data := t.getDataWithMinPadding(csvData)
 	data = t.getDataWithMaxPadding(data)
+	data = t.getDataWithWeights(data)
 
+	for i := 0; i < len(data); i++ {
+		for j := 0; j < len(data[i]); j++ {
+			fmt.Print(data[i][j], " ")
+		}
+		fmt.Println()
+	}
+
+	var turbo [][]*models.TurboScore
+	for i := 0; i < len(data); i++ {
+		var line []*models.TurboScore
+
+		maxCFM := 0.0
+		for j := 0; j < len(data[i]); j++ {
+			if data[i][j] != "S" && data[i][j] != "C" {
+				cfm := models.GetFlowFromBaseRange(data[i][j])
+				if cfm > maxCFM {
+					maxCFM = cfm
+				}
+			}
+		}
+
+		for j := 0; j < len(data[i]); j++ {
+			if data[i][j] == "S" {
+				line = append(line, &models.TurboScore{
+					Boost:  0,
+					Health: 1,
+					CFM:    0,
+					Weight: 0,
+					Out:    true,
+				})
+			} else if data[i][j] == "C" {
+				line = append(line, &models.TurboScore{
+					Boost:  1,
+					Health: 0,
+					CFM:    maxCFM,
+					Weight: 0,
+					Out:    true,
+				})
+			} else {
+				cfm := models.GetFlowFromBaseRange(data[i][j])
+				score := models.GetScoreFromBaseRange(data[i][j])
+				line = append(line, &models.TurboScore{
+					Health: 0,
+					CFM:    cfm,
+					Weight: score,
+					Out:    false,
+				})
+			}
+		}
+
+		turbo = append(turbo, line)
+	}
+
+	for i := 0; i < len(turbo); i++ {
+		minWeight := 10000.0
+		minWeightIndex := 0
+		for j := 0; j < len(turbo[i]); j++ {
+			if turbo[i][j].Out {
+				continue
+			}
+			currentWeight := turbo[i][j].Weight
+			if currentWeight < minWeight {
+				minWeight = currentWeight
+				minWeightIndex = j
+			}
+		}
+
+		maxBottom := 0.0
+		maxBottomIndex := 0
+		for j := 0; j < len(turbo[i]); j++ {
+			if turbo[i][j].Weight != 0 {
+				maxBottom = turbo[i][j].Weight
+				maxBottomIndex = j
+				break
+			}
+		}
+
+		fmt.Println(minWeight, minWeightIndex, maxBottom, maxBottomIndex)
+	}
+
+	for i := 0; i < len(turbo); i++ {
+		for j := 0; j < len(turbo[i]); j++ {
+			fmt.Print(turbo[i][j])
+		}
+		fmt.Println()
+	}
+
+	return nil, nil
+}
+
+func (t *TurboRepository) getDataWithWeights(data [][]string) [][]string {
 	for i := 0; i < len(data); i++ {
 		found := 0
 		max := 0
@@ -46,32 +138,21 @@ func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Tu
 		}
 		max = found
 		for j := 0; j < max; j++ {
-			data[i][j] = fmt.Sprintf("%s-%d", data[i][j], found+int(base))
+			if data[i][j] != "S" && data[i][j] != "C" {
+				data[i][j] = fmt.Sprintf("%s-%d", data[i][j], found+int(base))
+			}
 			found--
 		}
 		offset := 1
 		for j := max + 2; j < len(data[i]); j++ {
-			data[i][j] = fmt.Sprintf("%s-%d", data[i][j], offset+int(base))
+			if data[i][j] != "S" && data[i][j] != "C" {
+				data[i][j] = fmt.Sprintf("%s-%d", data[i][j], offset+int(base))
+			}
 			offset++
 		}
 	}
 
-	fmt.Println(data)
-
-	/*matrix := matrix.BuildEmptyTurbo()
-	arr := t.toArray(entries)
-
-	for i := 0; i < consts.TurboMaxLines; i++ {
-		for j := 0; j < consts.TurboMaxColumns; j++ {
-			matrix[i][j] = models.NewTurboScoreFromString(arr[i].Flow[j])
-		}
-	}
-
-	return &models.Turbo{
-		Name:   turboFile,
-		Slices: nil,
-	}, nil*/
-	return nil, nil
+	return data
 }
 
 func (t *TurboRepository) getDataWithMaxPadding(data [][]string) [][]string {
@@ -98,73 +179,4 @@ func (t *TurboRepository) getDataWithMinPadding(data [][]string) [][]string {
 		minPadded = append(minPadded, line)
 	}
 	return minPadded
-}
-
-/*func (t *TurboRepository) getSlices(arr []*TurboPressureDAOArray) map[string][]*models.Range {
-	slices := make(map[string][]*models.Range)
-	for _, slice := range arr {
-		var ranges []*models.Range
-
-		// find base line, the better range
-		base := 0
-		for i, f := range slice.Flow {
-			if IsBaseRange(f) {
-				base = i
-				break
-			}
-		}
-
-		baseScore := GetScoreFromBaseRange(slice.Flow[base])
-
-		// Add base line, the better range
-		ranges = append(ranges, &models.Range{
-			Min:    GetFlowFromBaseRange(slice.Flow[base]),
-			Max:    GetFlowFromBaseRange(slice.Flow[base+1]),
-			Health: baseScore,
-			Boost:  baseScore,
-		})
-
-		// Add bottom half
-		for i := base; i > 0; i-- {
-			ranges = append(ranges, &models.Range{
-				Min: GetFlowFromBaseRange(slice.Flow[i-1]),
-				Max: GetFlowFromBaseRange(slice.Flow[i]),
-			})
-		}
-
-		// Surge bottom
-		ranges = append(ranges, &models.Range{
-			Min: 0,
-			Max: GetFlowFromBaseRange(slice.Flow[0]),
-		})
-
-		// Add top half
-		for i := base; i < len(slice.Flow)-2; i++ {
-			ranges = append(ranges, &models.Range{
-				Min: GetFlowFromBaseRange(slice.Flow[i+1]),
-				Max: GetFlowFromBaseRange(slice.Flow[i+2]),
-			})
-		}
-
-		// Choke top
-		ranges = append(ranges, &models.Range{
-			Min: GetFlowFromBaseRange(slice.Flow[len(slice.Flow)-1]),
-			Max: 10000,
-		})
-
-		ranges = sort.Merge(ranges)
-
-		kg, _ := strconv.ParseFloat(strings.TrimSpace(slice.Kg), 64)
-		slices[models.KgKey(kg)] = ranges
-	}
-
-	return slices
-}*/
-
-func (t *TurboRepository) toArray(valids []*TurboPressureDAO) []*TurboPressureDAOArray {
-	var arr []*TurboPressureDAOArray
-	for _, entry := range valids {
-		arr = append(arr, entry.ToArray())
-	}
-	return arr
 }

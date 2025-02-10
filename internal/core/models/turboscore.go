@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -29,29 +30,9 @@ type TurboScore struct {
 	Health float64
 	Weight float64
 	CFM    float64
+	Out    bool
 }
 
-func NewTurboScoreFromString(s string) *TurboScore {
-	if s == "" {
-		return &TurboScore{}
-	}
-
-	if IsBaseRange(s) {
-		score := GetScoreFromBaseRange(s)
-		cfm := GetFlowFromBaseRange(s)
-
-		return &TurboScore{
-			Boost:  1.0,
-			Health: 1.0,
-			Weight: score,
-			CFM:    cfm,
-		}
-	}
-
-	v, _ := strconv.ParseFloat(strings.TrimSpace(s), 64)
-
-	return &TurboScore{
-		CFM: v,
-	}
-
+func (t *TurboScore) String() string {
+	return fmt.Sprintf("(%.2fB %.2fH %.2fW %.2fC) ", t.Boost, t.Health, t.Weight, t.CFM)
 }
