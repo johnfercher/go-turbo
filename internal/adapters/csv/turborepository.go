@@ -113,7 +113,7 @@ func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Tu
 		diff := maxBottom - minWeight
 		offset := 1.0 / (diff + 2)
 
-		for j := 0; j < minWeightIndex+1; j++ {
+		for j := 1; j < minWeightIndex+1; j++ {
 			v := float64(j+1.0) * offset
 			turbo[i][j].Boost = v
 		}
