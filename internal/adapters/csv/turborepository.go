@@ -3,12 +3,10 @@ package csv
 import (
 	"bytes"
 	"context"
-	"github.com/gocarina/gocsv"
+	"encoding/csv"
+	"fmt"
 	"github.com/johnfercher/go-turbo/internal/core/models"
-	"github.com/johnfercher/go-turbo/internal/sort"
 	"os"
-	"strconv"
-	"strings"
 )
 
 type TurboRepository struct {
@@ -24,23 +22,85 @@ func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Tu
 		return nil, err
 	}
 
-	var entries []*TurboPressureDAO
-	err = gocsv.Unmarshal(bytes.NewBuffer(b), &entries)
+	reader := csv.NewReader(bytes.NewBuffer(b))
+	reader.FieldsPerRecord = -1
+	csvData, err := reader.ReadAll()
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
-	valids := t.filterValids(entries)
-	arr := t.toArray(valids)
-	slices := t.getSlices(arr)
+	data := t.getDataWithMinPadding(csvData)
+	data = t.getDataWithMaxPadding(data)
+
+	for i := 0; i < len(data); i++ {
+		found := 0
+		max := 0
+		base := 0.0
+		for j := 0; j < len(data[i]); j++ {
+			if models.IsBaseRange(data[i][j]) {
+				base = models.GetScoreFromBaseRange(data[i][j])
+				break
+			} else {
+				found++
+			}
+		}
+		max = found
+		for j := 0; j < max; j++ {
+			data[i][j] = fmt.Sprintf("%s-%d", data[i][j], found+int(base))
+			found--
+		}
+		offset := 1
+		for j := max + 2; j < len(data[i]); j++ {
+			data[i][j] = fmt.Sprintf("%s-%d", data[i][j], offset+int(base))
+			offset++
+		}
+	}
+
+	fmt.Println(data)
+
+	/*matrix := matrix.BuildEmptyTurbo()
+	arr := t.toArray(entries)
+
+	for i := 0; i < consts.TurboMaxLines; i++ {
+		for j := 0; j < consts.TurboMaxColumns; j++ {
+			matrix[i][j] = models.NewTurboScoreFromString(arr[i].Flow[j])
+		}
+	}
 
 	return &models.Turbo{
 		Name:   turboFile,
-		Slices: slices,
-	}, nil
+		Slices: nil,
+	}, nil*/
+	return nil, nil
 }
 
-func (t *TurboRepository) getSlices(arr []*TurboPressureDAOArray) map[string][]*models.Range {
+func (t *TurboRepository) getDataWithMaxPadding(data [][]string) [][]string {
+	for i := 0; i < len(data); i++ {
+		for j := 0; j < len(data[i]); j++ {
+			d := data[i][j]
+			if d == "" {
+				data[i][j] = "C"
+			}
+		}
+	}
+
+	return data
+}
+
+func (t *TurboRepository) getDataWithMinPadding(data [][]string) [][]string {
+	var minPadded [][]string
+	for i := 1; i < len(data); i++ {
+		var line []string
+		line = append(line, "S")
+		for j := 1; j < len(data[i]); j++ {
+			line = append(line, data[i][j])
+		}
+		minPadded = append(minPadded, line)
+	}
+	return minPadded
+}
+
+/*func (t *TurboRepository) getSlices(arr []*TurboPressureDAOArray) map[string][]*models.Range {
 	slices := make(map[string][]*models.Range)
 	for _, slice := range arr {
 		var ranges []*models.Range
@@ -99,7 +159,7 @@ func (t *TurboRepository) getSlices(arr []*TurboPressureDAOArray) map[string][]*
 	}
 
 	return slices
-}
+}*/
 
 func (t *TurboRepository) toArray(valids []*TurboPressureDAO) []*TurboPressureDAOArray {
 	var arr []*TurboPressureDAOArray
@@ -107,14 +167,4 @@ func (t *TurboRepository) toArray(valids []*TurboPressureDAO) []*TurboPressureDA
 		arr = append(arr, entry.ToArray())
 	}
 	return arr
-}
-
-func (t *TurboRepository) filterValids(entries []*TurboPressureDAO) []*TurboPressureDAO {
-	var valids []*TurboPressureDAO
-	for _, entry := range entries {
-		if !entry.IsEmpty() {
-			valids = append(valids, entry)
-		}
-	}
-	return valids
 }
