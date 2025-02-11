@@ -37,9 +37,9 @@ func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Tu
 	turbo = t.normalizeWeights(turbo)
 
 	models.PrintBoost(turbo)
-	models.PrintWeight(turbo)
+	//models.PrintWeight(turbo)
 	//models.PrintCFM(turbo)
-	//models.PrintHealth(turbo)
+	models.PrintHealth(turbo)
 	//models.PrintSurge(turbo)
 	//models.PrintChoke(turbo)
 
