@@ -33,11 +33,18 @@ func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Tu
 	data = t.addChokeColumns(data)
 	data = t.addWeightsOutsideSurgeChoke(data)
 	turbo := t.buildTurboMatrixWithSurgeAndChoke(data)
-	turbo = t.computeBottomHalfNumbers(turbo)
 	turbo = t.normalizeWeights(turbo)
+	turbo = t.computeBoost(turbo)
+	turbo = t.computeHealth(turbo)
 
-	models.PrintBoost(turbo)
-	//models.PrintWeight(turbo)
+	for i := 0; i < len(turbo); i++ {
+		for j := 0; j < len(turbo[i]); j++ {
+
+		}
+	}
+
+	//models.PrintBoost(turbo)
+	models.PrintWeight(turbo)
 	//models.PrintCFM(turbo)
 	models.PrintHealth(turbo)
 	//models.PrintSurge(turbo)
@@ -75,37 +82,55 @@ func (t *TurboRepository) normalizeWeights(turbo [][]*models.TurboScore) [][]*mo
 	return turbo
 }
 
-func (t *TurboRepository) computeBottomHalfNumbers(turbo [][]*models.TurboScore) [][]*models.TurboScore {
+func (t *TurboRepository) computeHealth(turbo [][]*models.TurboScore) [][]*models.TurboScore {
 	for i := 0; i < len(turbo); i++ {
-		minWeight := 10000.0
-		minWeightIndex := 0
+		firstMaxWeight := 0.0
+		firstMaxWeightIndex := 0
 		for j := 0; j < len(turbo[i]); j++ {
 			if turbo[i][j].Surge || turbo[i][j].Choke {
 				continue
 			}
 			currentWeight := turbo[i][j].Weight
-			if currentWeight < minWeight {
-				minWeight = currentWeight
-				minWeightIndex = j
+			if currentWeight > firstMaxWeight {
+				firstMaxWeight = currentWeight
+				firstMaxWeightIndex = j
 			}
 		}
 
-		maxBottom := 0.0
-		for j := 0; j < len(turbo[i]); j++ {
-			if turbo[i][j].Weight != 0 {
-				maxBottom = turbo[i][j].Weight
-				break
-			}
-		}
-
-		diff := maxBottom - minWeight
-		offset := 1.0 / (diff + 2)
-
-		for j := 1; j < minWeightIndex+1; j++ {
+		for j := 1; j <= firstMaxWeightIndex+1; j++ {
 			if !turbo[i][j].Surge && !turbo[i][j].Choke {
-				v := float64(j+1.0) * offset
-				turbo[i][j].Boost = v
 				turbo[i][j].Health = 1
+			}
+		}
+	}
+
+	return turbo
+}
+
+func (t *TurboRepository) computeBoost(turbo [][]*models.TurboScore) [][]*models.TurboScore {
+	for i := 0; i < len(turbo); i++ {
+		firstMaxWeight := 0.0
+		firstMaxWeightIndex := 0
+		for j := 0; j < len(turbo[i]); j++ {
+			if turbo[i][j].Surge || turbo[i][j].Choke {
+				continue
+			}
+			currentWeight := turbo[i][j].Weight
+			if currentWeight > firstMaxWeight {
+				firstMaxWeight = currentWeight
+				firstMaxWeightIndex = j
+			}
+		}
+
+		for j := 1; j <= firstMaxWeightIndex+1; j++ {
+			if !turbo[i][j].Surge && !turbo[i][j].Choke {
+				turbo[i][j].Boost = turbo[i][j].Weight
+			}
+		}
+
+		for j := firstMaxWeightIndex + 2; j < len(turbo[i]); j++ {
+			if !turbo[i][j].Surge {
+				turbo[i][j].Boost = 1.0
 			}
 		}
 	}
