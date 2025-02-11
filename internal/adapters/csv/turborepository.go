@@ -33,13 +33,6 @@ func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Tu
 	data = t.getDataWithMaxPadding(data)
 	data = t.getDataWithWeights(data)
 
-	for i := 0; i < len(data); i++ {
-		for j := 0; j < len(data[i]); j++ {
-			fmt.Print(data[i][j], " ")
-		}
-		fmt.Println()
-	}
-
 	var turbo [][]*models.TurboScore
 	for i := 0; i < len(data); i++ {
 		var line []*models.TurboScore
@@ -54,6 +47,7 @@ func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Tu
 			}
 		}
 
+		// Define base surge/choke
 		for j := 0; j < len(data[i]); j++ {
 			if data[i][j] == "S" {
 				line = append(line, &models.TurboScore{
@@ -61,7 +55,8 @@ func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Tu
 					Health: 1,
 					CFM:    0,
 					Weight: 0,
-					Out:    true,
+					Surge:  true,
+					Choke:  false,
 				})
 			} else if data[i][j] == "C" {
 				line = append(line, &models.TurboScore{
@@ -69,7 +64,8 @@ func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Tu
 					Health: 0,
 					CFM:    maxCFM,
 					Weight: 0,
-					Out:    true,
+					Surge:  false,
+					Choke:  true,
 				})
 			} else {
 				cfm := models.GetFlowFromBaseRange(data[i][j])
@@ -78,7 +74,8 @@ func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Tu
 					Health: 0,
 					CFM:    cfm,
 					Weight: score,
-					Out:    false,
+					Surge:  false,
+					Choke:  false,
 				})
 			}
 		}
@@ -90,7 +87,7 @@ func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Tu
 		minWeight := 10000.0
 		minWeightIndex := 0
 		for j := 0; j < len(turbo[i]); j++ {
-			if turbo[i][j].Out {
+			if turbo[i][j].Surge || turbo[i][j].Choke {
 				continue
 			}
 			currentWeight := turbo[i][j].Weight
@@ -114,19 +111,26 @@ func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Tu
 		offset := 1.0 / (diff + 2)
 
 		for j := 1; j < minWeightIndex+1; j++ {
-			v := float64(j+1.0) * offset
-			turbo[i][j].Boost = v
+			if !turbo[i][j].Surge && !turbo[i][j].Choke {
+				v := float64(j+1.0) * offset
+				turbo[i][j].Boost = v
+				turbo[i][j].Health = 1
+			}
+		}
+
+		for j := minWeightIndex; j < len(turbo[i]); j++ {
+			if !turbo[i][j].Surge {
+				turbo[i][j].Boost = 1.0
+			}
 		}
 
 		fmt.Println(minWeight, minWeightIndex, maxBottom, maxBottomIndex)
 	}
 
-	for i := 0; i < len(turbo); i++ {
-		for j := 0; j < len(turbo[i]); j++ {
-			fmt.Print(turbo[i][j])
-		}
-		fmt.Println()
-	}
+	//models.PrintBoost(turbo)
+	//models.PrintWeight(turbo)
+	//models.PrintCFM(turbo)
+	models.PrintHealth(turbo)
 
 	return nil, nil
 }
@@ -165,12 +169,30 @@ func (t *TurboRepository) getDataWithWeights(data [][]string) [][]string {
 
 func (t *TurboRepository) getDataWithMaxPadding(data [][]string) [][]string {
 	for i := 0; i < len(data); i++ {
+		allEmpty := true
 		for j := 0; j < len(data[i]); j++ {
-			d := data[i][j]
-			if d == "" {
-				data[i][j] = "C"
+			if data[i][j] != "" && data[i][j] != "S" {
+				allEmpty = false
+				break
 			}
 		}
+
+		if allEmpty {
+			for j := 0; j < len(data[i]); j++ {
+				d := data[i][j]
+				if d == "" {
+					data[i][j] = "S"
+				}
+			}
+		} else {
+			for j := 0; j < len(data[i]); j++ {
+				d := data[i][j]
+				if d == "" {
+					data[i][j] = "C"
+				}
+			}
+		}
+
 	}
 
 	return data
