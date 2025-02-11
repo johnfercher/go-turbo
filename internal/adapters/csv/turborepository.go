@@ -44,7 +44,7 @@ func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Tu
 	}
 
 	//models.PrintBoost(turbo)
-	models.PrintWeight(turbo)
+	//models.PrintWeight(turbo)
 	//models.PrintCFM(turbo)
 	models.PrintHealth(turbo)
 	//models.PrintSurge(turbo)
@@ -122,15 +122,17 @@ func (t *TurboRepository) computeBoost(turbo [][]*models.TurboScore) [][]*models
 			}
 		}
 
-		for j := 1; j <= firstMaxWeightIndex+1; j++ {
-			if !turbo[i][j].Surge && !turbo[i][j].Choke {
-				turbo[i][j].Boost = turbo[i][j].Weight
-			}
-		}
-
-		for j := firstMaxWeightIndex + 2; j < len(turbo[i]); j++ {
-			if !turbo[i][j].Surge {
-				turbo[i][j].Boost = 1.0
+		maxBoostInRange := 0.0
+		for j := 1; j < len(turbo[i]); j++ {
+			if j <= firstMaxWeightIndex+1 {
+				if !turbo[i][j].Surge && !turbo[i][j].Choke {
+					turbo[i][j].Boost = turbo[i][j].Weight
+					if maxBoostInRange < turbo[i][j].Weight {
+						maxBoostInRange = turbo[i][j].Weight
+					}
+				}
+			} else {
+				turbo[i][j].Boost = maxBoostInRange
 			}
 		}
 	}
@@ -166,7 +168,7 @@ func (t *TurboRepository) buildTurboMatrixWithSurgeAndChoke(data [][]string) [][
 				})
 			} else if data[i][j] == "C" {
 				line = append(line, &models.TurboScore{
-					Boost:  1,
+					Boost:  0,
 					Health: 0,
 					CFM:    maxCFM,
 					Weight: 0,
