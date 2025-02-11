@@ -29,10 +29,91 @@ func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Tu
 		panic(err)
 	}
 
-	data := t.getDataWithMinPadding(csvData)
-	data = t.getDataWithMaxPadding(data)
-	data = t.getDataWithWeights(data)
+	data := t.addSurgeFirstColumnSurge(csvData)
+	data = t.addChokeColumns(data)
+	data = t.addWeightsOutsideSurgeChoke(data)
+	turbo := t.buildTurboMatrixWithSurgeAndChoke(data)
+	turbo = t.computeBottomHalfNumbers(turbo)
+	turbo = t.normalizeWeights(turbo)
 
+	models.PrintBoost(turbo)
+	models.PrintWeight(turbo)
+	//models.PrintCFM(turbo)
+	//models.PrintHealth(turbo)
+	//models.PrintSurge(turbo)
+	//models.PrintChoke(turbo)
+
+	return nil, nil
+}
+
+func (t *TurboRepository) normalizeWeights(turbo [][]*models.TurboScore) [][]*models.TurboScore {
+	// Add all max to invalid points
+	maxWeight := 0.0
+	for i := 0; i < len(turbo); i++ {
+		for j := 0; j < len(turbo[i]); j++ {
+			if turbo[i][j].Weight > maxWeight {
+				maxWeight = turbo[i][j].Weight
+			}
+		}
+	}
+
+	for i := 0; i < len(turbo); i++ {
+		for j := 0; j < len(turbo[i]); j++ {
+			if turbo[i][j].Weight == 0 {
+				turbo[i][j].Weight = maxWeight + 1
+			}
+		}
+	}
+
+	base := 1 / maxWeight
+	for i := 0; i < len(turbo); i++ {
+		for j := 0; j < len(turbo[i]); j++ {
+			turbo[i][j].Weight = 1 + base - (turbo[i][j].Weight / maxWeight)
+		}
+	}
+
+	return turbo
+}
+
+func (t *TurboRepository) computeBottomHalfNumbers(turbo [][]*models.TurboScore) [][]*models.TurboScore {
+	for i := 0; i < len(turbo); i++ {
+		minWeight := 10000.0
+		minWeightIndex := 0
+		for j := 0; j < len(turbo[i]); j++ {
+			if turbo[i][j].Surge || turbo[i][j].Choke {
+				continue
+			}
+			currentWeight := turbo[i][j].Weight
+			if currentWeight < minWeight {
+				minWeight = currentWeight
+				minWeightIndex = j
+			}
+		}
+
+		maxBottom := 0.0
+		for j := 0; j < len(turbo[i]); j++ {
+			if turbo[i][j].Weight != 0 {
+				maxBottom = turbo[i][j].Weight
+				break
+			}
+		}
+
+		diff := maxBottom - minWeight
+		offset := 1.0 / (diff + 2)
+
+		for j := 1; j < minWeightIndex+1; j++ {
+			if !turbo[i][j].Surge && !turbo[i][j].Choke {
+				v := float64(j+1.0) * offset
+				turbo[i][j].Boost = v
+				turbo[i][j].Health = 1
+			}
+		}
+	}
+
+	return turbo
+}
+
+func (t *TurboRepository) buildTurboMatrixWithSurgeAndChoke(data [][]string) [][]*models.TurboScore {
 	var turbo [][]*models.TurboScore
 	for i := 0; i < len(data); i++ {
 		var line []*models.TurboScore
@@ -82,60 +163,10 @@ func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Tu
 
 		turbo = append(turbo, line)
 	}
-
-	for i := 0; i < len(turbo); i++ {
-		minWeight := 10000.0
-		minWeightIndex := 0
-		for j := 0; j < len(turbo[i]); j++ {
-			if turbo[i][j].Surge || turbo[i][j].Choke {
-				continue
-			}
-			currentWeight := turbo[i][j].Weight
-			if currentWeight < minWeight {
-				minWeight = currentWeight
-				minWeightIndex = j
-			}
-		}
-
-		maxBottom := 0.0
-		maxBottomIndex := 0
-		for j := 0; j < len(turbo[i]); j++ {
-			if turbo[i][j].Weight != 0 {
-				maxBottom = turbo[i][j].Weight
-				maxBottomIndex = j
-				break
-			}
-		}
-
-		diff := maxBottom - minWeight
-		offset := 1.0 / (diff + 2)
-
-		for j := 1; j < minWeightIndex+1; j++ {
-			if !turbo[i][j].Surge && !turbo[i][j].Choke {
-				v := float64(j+1.0) * offset
-				turbo[i][j].Boost = v
-				turbo[i][j].Health = 1
-			}
-		}
-
-		for j := minWeightIndex; j < len(turbo[i]); j++ {
-			if !turbo[i][j].Surge {
-				turbo[i][j].Boost = 1.0
-			}
-		}
-
-		fmt.Println(minWeight, minWeightIndex, maxBottom, maxBottomIndex)
-	}
-
-	//models.PrintBoost(turbo)
-	//models.PrintWeight(turbo)
-	//models.PrintCFM(turbo)
-	models.PrintHealth(turbo)
-
-	return nil, nil
+	return turbo
 }
 
-func (t *TurboRepository) getDataWithWeights(data [][]string) [][]string {
+func (t *TurboRepository) addWeightsOutsideSurgeChoke(data [][]string) [][]string {
 	for i := 0; i < len(data); i++ {
 		found := 0
 		max := 0
@@ -164,10 +195,17 @@ func (t *TurboRepository) getDataWithWeights(data [][]string) [][]string {
 		}
 	}
 
+	/*for i := 0; i < len(data); i++ {
+		for j := 0; j < len(data[i]); j++ {
+			fmt.Print(data[i][j], " ")
+		}
+		fmt.Println()
+	}*/
+
 	return data
 }
 
-func (t *TurboRepository) getDataWithMaxPadding(data [][]string) [][]string {
+func (t *TurboRepository) addChokeColumns(data [][]string) [][]string {
 	for i := 0; i < len(data); i++ {
 		allEmpty := true
 		for j := 0; j < len(data[i]); j++ {
@@ -198,7 +236,7 @@ func (t *TurboRepository) getDataWithMaxPadding(data [][]string) [][]string {
 	return data
 }
 
-func (t *TurboRepository) getDataWithMinPadding(data [][]string) [][]string {
+func (t *TurboRepository) addSurgeFirstColumnSurge(data [][]string) [][]string {
 	var minPadded [][]string
 	for i := 1; i < len(data); i++ {
 		var line []string
