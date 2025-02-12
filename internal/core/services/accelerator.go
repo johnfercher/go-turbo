@@ -33,10 +33,12 @@ func (a *Accelerator) Simulate(ctx context.Context, engineModel string, turboMod
 
 	fmt.Println(turbo)
 
-	for i := 0; i <= 9000; i++ {
+	revLimiter := 7500
+	for i := 0; i <= revLimiter; i++ {
 		cfm := engine.Get(float64(i), boost)
 		if i%100 == 0 {
-			fmt.Println(cfm)
+			surge, choke, trueBoost, health := turbo.Get(cfm.Flow, boost)
+			fmt.Printf("Boost: %.2f, RPM: %d, CFM: %.2f, Surge: %v, Choke: %v, TrueBoost: %.2f, Health: %.2f\n", boost, i, cfm.Flow, surge, choke, trueBoost, health)
 		}
 	}
 

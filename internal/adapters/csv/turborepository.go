@@ -45,7 +45,7 @@ func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Tu
 	//models.PrintSurge(turbo)
 	//models.PrintChoke(turbo)
 
-	return models.NewTurbo(turboFile, turbo), nil
+	return models.NewTurbo(turboFile, turbo)
 }
 
 func (t *TurboRepository) normalizeWeights(turbo [][]*models.TurboScore) [][]*models.TurboScore {
