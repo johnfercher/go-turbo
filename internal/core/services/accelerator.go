@@ -33,21 +33,12 @@ func (a *Accelerator) Simulate(ctx context.Context, engineModel string, turboMod
 
 	fmt.Println(turbo)
 
-	turboCFM, err := turbo.GetBootsCFMRange(boost)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println(turboCFM)
-
 	for i := 0; i <= 9000; i++ {
 		cfm := engine.Get(float64(i), boost)
 		if i%100 == 0 {
 			fmt.Println(cfm)
 		}
 	}
-
-	fmt.Println(turboCFM)
 
 	return err
 }

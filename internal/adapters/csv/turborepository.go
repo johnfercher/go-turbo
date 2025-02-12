@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/csv"
 	"fmt"
+	"github.com/johnfercher/go-turbo/internal/core/consts"
 	"github.com/johnfercher/go-turbo/internal/core/models"
 	"os"
 )
@@ -37,20 +38,14 @@ func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Tu
 	turbo = t.computeBoost(turbo)
 	turbo = t.computeHealth(turbo)
 
-	for i := 0; i < len(turbo); i++ {
-		for j := 0; j < len(turbo[i]); j++ {
-
-		}
-	}
-
 	//models.PrintBoost(turbo)
 	//models.PrintWeight(turbo)
 	//models.PrintCFM(turbo)
-	models.PrintHealth(turbo)
+	//models.PrintHealth(turbo)
 	//models.PrintSurge(turbo)
 	//models.PrintChoke(turbo)
 
-	return nil, nil
+	return models.NewTurbo(turboFile, turbo), nil
 }
 
 func (t *TurboRepository) normalizeWeights(turbo [][]*models.TurboScore) [][]*models.TurboScore {
@@ -86,7 +81,11 @@ func (t *TurboRepository) computeHealth(turbo [][]*models.TurboScore) [][]*model
 	for i := 0; i < len(turbo); i++ {
 		firstMaxWeight := 0.0
 		firstMaxWeightIndex := 0
+		beginChokeIndex := 0
 		for j := 0; j < len(turbo[i]); j++ {
+			if turbo[i][j].Choke && beginChokeIndex == 0 {
+				beginChokeIndex = j
+			}
 			if turbo[i][j].Surge || turbo[i][j].Choke {
 				continue
 			}
@@ -97,9 +96,30 @@ func (t *TurboRepository) computeHealth(turbo [][]*models.TurboScore) [][]*model
 			}
 		}
 
-		for j := 1; j <= firstMaxWeightIndex+1; j++ {
+		entireChokeSurge := true
+		for j := 0; j < len(turbo[i]); j++ {
 			if !turbo[i][j].Surge && !turbo[i][j].Choke {
-				turbo[i][j].Health = 1
+				entireChokeSurge = false
+				break
+			}
+		}
+
+		if entireChokeSurge {
+			continue
+		}
+
+		rateChoke := 1 / (float64(beginChokeIndex) - float64(firstMaxWeightIndex+1))
+		chokeIndex := 0.0
+		for j := 1; j < len(turbo[i]); j++ {
+			if j < firstMaxWeightIndex+1 {
+				if !turbo[i][j].Surge && !turbo[i][j].Choke {
+					turbo[i][j].Health = 1
+				}
+			} else {
+				if !turbo[i][j].Choke {
+					turbo[i][j].Health = 1 - (rateChoke * chokeIndex)
+					chokeIndex++
+				}
 			}
 		}
 	}
@@ -122,17 +142,36 @@ func (t *TurboRepository) computeBoost(turbo [][]*models.TurboScore) [][]*models
 			}
 		}
 
-		maxBoostInRange := 0.0
+		entireChokeSurge := true
+		for j := 0; j < len(turbo[i]); j++ {
+			if !turbo[i][j].Surge && !turbo[i][j].Choke {
+				entireChokeSurge = false
+				break
+			}
+		}
+
+		if entireChokeSurge {
+			continue
+		}
+
+		beginValidIndex := 0
+		for j := 0; j < len(turbo[i]); j++ {
+			if !turbo[i][j].Surge {
+				beginValidIndex = j
+				break
+			}
+		}
+
+		maxBoost := consts.Boosts[i]
+		rateBoost := float64(beginValidIndex) / float64(firstMaxWeightIndex)
+		stepBoost := rateBoost * maxBoost
 		for j := 1; j < len(turbo[i]); j++ {
-			if j <= firstMaxWeightIndex+1 {
+			if j <= firstMaxWeightIndex {
 				if !turbo[i][j].Surge && !turbo[i][j].Choke {
-					turbo[i][j].Boost = turbo[i][j].Weight
-					if maxBoostInRange < turbo[i][j].Weight {
-						maxBoostInRange = turbo[i][j].Weight
-					}
+					turbo[i][j].Boost = stepBoost * float64(j)
 				}
 			} else {
-				turbo[i][j].Boost = maxBoostInRange
+				turbo[i][j].Boost = maxBoost
 			}
 		}
 	}
