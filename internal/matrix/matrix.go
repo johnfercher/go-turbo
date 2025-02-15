@@ -29,6 +29,7 @@ func InitMatrix(maxBoost int, maxFlow int) [][]*models.TurboScore {
 func Val(matrix [][]*models.TurboScore, turbo [][]string) [][]*models.TurboScore {
 	step := 20.0
 
+	// Find marks
 	var points Points
 	for i := 0; i < len(turbo); i++ {
 		for j := 0; j < len(turbo[i]); j++ {
@@ -48,21 +49,29 @@ func Val(matrix [][]*models.TurboScore, turbo [][]string) [][]*models.TurboScore
 		}
 	}
 
+	// Fill marks
 	xSize := len(matrix)
 	ySize := len(matrix[0])
 	for i := 0; i < ySize; i++ {
-		lastScore := 0
-		foundLast := false
 		for j := 0; j < xSize; j++ {
 			score := points.GetValue(j, i)
 			if score != 0 {
-				lastScore = score
-				foundLast = true
 				matrix[j][i].Weight = float64(score)
-			} else {
-				if foundLast {
-					matrix[j][i].Weight = float64(lastScore)
-				}
+			}
+		}
+	}
+
+	for i := 0; i < ySize; i++ {
+		foundScore := false
+		lastScore := 0.0
+		for j := 0; j < xSize; j++ {
+			score := matrix[j][i].Weight
+			if score != 0 {
+				foundScore = true
+				lastScore = score
+			}
+			if foundScore {
+				matrix[j][i].Weight = lastScore
 			}
 		}
 	}
