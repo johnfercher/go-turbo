@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/johnfercher/go-turbo/internal/core/consts"
 	"gonum.org/v1/gonum/interp"
-	"math"
 )
 
 type Turbo struct {
@@ -63,23 +62,8 @@ func (t *Turbo) String() string {
 }
 
 func (t *Turbo) Get(cfm float64, configuredBoost float64) (surge bool, choke bool, boost float64, health float64) {
-	turboSlice := t.TurboScore[KgKey(configuredBoost)]
-
 	boostInter := t.BoostInter[KgKey(configuredBoost)]
 	healthInter := t.HealthInter[KgKey(configuredBoost)]
-
-	closerValue := 10000.0
-	closerIndex := 0
-	for index, turbo := range turboSlice {
-		currentValue := math.Abs(cfm - turbo.CFM)
-		if currentValue < closerValue {
-			closerValue = currentValue
-			closerIndex = index
-		}
-	}
-
-	surge = turboSlice[closerIndex].Surge
-	choke = turboSlice[closerIndex].Choke
 
 	boost = boostInter.Predict(cfm)
 	if boost < 0 {
@@ -88,12 +72,18 @@ func (t *Turbo) Get(cfm float64, configuredBoost float64) (surge bool, choke boo
 	if boost > configuredBoost {
 		boost = configuredBoost
 	}
+	if boost == 0 {
+		surge = true
+	}
 	health = healthInter.Predict(cfm)
 	if health < 0 {
 		health = 0
 	}
 	if health > 1.0 {
 		health = 1.0
+	}
+	if health == 0 {
+		choke = true
 	}
 
 	return

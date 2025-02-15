@@ -1,12 +1,12 @@
 package csv
 
 import (
-	"bytes"
 	"context"
-	"encoding/csv"
 	"fmt"
+	"github.com/johnfercher/go-turbo/internal/adapters/pdf"
 	"github.com/johnfercher/go-turbo/internal/core/consts"
 	"github.com/johnfercher/go-turbo/internal/core/models"
+	"github.com/johnfercher/go-turbo/internal/matrix"
 	"os"
 )
 
@@ -23,16 +23,23 @@ func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Tu
 		return nil, err
 	}
 
-	reader := csv.NewReader(bytes.NewBuffer(b))
-	reader.FieldsPerRecord = -1
-	csvData, err := reader.ReadAll()
+	data := Load(b)
+
+	maxFlow := t.getMaxValue(data)
+	fmt.Println(maxFlow)
+
+	m := matrix.InitMatrix(200, maxFlow)
+
+	m = matrix.Val(m, data)
+
+	pdfReporter := pdf.NewPdfReporter()
+	err = pdfReporter.Generate(ctx, m, consts.TurboEfficiency)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	data := t.addSurgeFirstColumnSurge(csvData)
-	data = t.addChokeColumns(data)
-	data = t.addWeightsOutsideSurgeChoke(data)
+	matrix.PrintWeight(m, true)
+
 	turbo := t.buildTurboMatrixWithSurgeAndChoke(data)
 	turbo = t.normalizeWeights(turbo)
 	turbo = t.computeBoost(turbo)
@@ -232,85 +239,33 @@ func (t *TurboRepository) buildTurboMatrixWithSurgeAndChoke(data [][]string) [][
 	return turbo
 }
 
-func (t *TurboRepository) addWeightsOutsideSurgeChoke(data [][]string) [][]string {
+func (t *TurboRepository) getMaxValue(data [][]string) int {
+	max := 0.0
 	for i := 0; i < len(data); i++ {
-		found := 0
-		max := 0
-		base := 0.0
-		for j := 0; j < len(data[i]); j++ {
-			if models.IsBaseRange(data[i][j]) {
-				base = models.GetScoreFromBaseRange(data[i][j])
-				break
-			} else {
-				found++
-			}
-		}
-		max = found
-		for j := 0; j < max; j++ {
-			if data[i][j] != "S" && data[i][j] != "C" {
-				data[i][j] = fmt.Sprintf("%s-%d", data[i][j], found+int(base))
-			}
-			found--
-		}
-		offset := 1
-		for j := max + 2; j < len(data[i]); j++ {
-			if data[i][j] != "S" && data[i][j] != "C" {
-				data[i][j] = fmt.Sprintf("%s-%d", data[i][j], offset+int(base))
-			}
-			offset++
-		}
-	}
-
-	/*for i := 0; i < len(data); i++ {
-		for j := 0; j < len(data[i]); j++ {
-			fmt.Print(data[i][j], " ")
-		}
-		fmt.Println()
-	}*/
-
-	return data
-}
-
-func (t *TurboRepository) addChokeColumns(data [][]string) [][]string {
-	for i := 0; i < len(data); i++ {
-		allEmpty := true
-		for j := 0; j < len(data[i]); j++ {
-			if data[i][j] != "" && data[i][j] != "S" {
-				allEmpty = false
-				break
-			}
-		}
-
-		if allEmpty {
-			for j := 0; j < len(data[i]); j++ {
-				d := data[i][j]
-				if d == "" {
-					data[i][j] = "S"
-				}
-			}
-		} else {
-			for j := 0; j < len(data[i]); j++ {
-				d := data[i][j]
-				if d == "" {
-					data[i][j] = "C"
-				}
-			}
-		}
-
-	}
-
-	return data
-}
-
-func (t *TurboRepository) addSurgeFirstColumnSurge(data [][]string) [][]string {
-	var minPadded [][]string
-	for i := 1; i < len(data); i++ {
-		var line []string
-		line = append(line, "S")
 		for j := 1; j < len(data[i]); j++ {
-			line = append(line, data[i][j])
+			if models.IsBaseRange(data[i][j]) {
+				flow := models.GetFlowFromBaseRange(data[i][j])
+				if flow > max {
+					max = flow
+				}
+			}
 		}
-		minPadded = append(minPadded, line)
 	}
-	return minPadded
+
+	return int(max)
+}
+
+func (t *TurboRepository) getMaxBoost(data [][]string) int {
+	max := 0
+	step := 0.2
+	for i := 0; i < len(data); i++ {
+		for j := 1; j < len(data[i]); j++ {
+			if models.IsBaseRange(data[i][j]) {
+				max = i
+				break
+			}
+		}
+	}
+
+	return int(100 * float64(max) * step)
 }

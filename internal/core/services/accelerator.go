@@ -33,7 +33,7 @@ func (a *Accelerator) Simulate(ctx context.Context, engineModel string, turboMod
 
 	fmt.Print(turbo)
 
-	revLimiter := 7500
+	revLimiter := 11000
 	printRev := 500
 	for i := 0; i <= revLimiter; i++ {
 		cfm := engine.Get(float64(i), boost)
