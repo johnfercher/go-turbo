@@ -38,3 +38,16 @@ func TestPressureRatio(t *testing.T) {
 		assert.Equal(t, 2.0, PressureRatio(14.7))
 	})
 }
+
+func TestDistance(t *testing.T) {
+	t.Run("find correct distance", func(t *testing.T) {
+		assert.Equal(t, 5.0, Distance(0, 0, 3, 4))
+	})
+}
+
+func TestAngleBetween(t *testing.T) {
+	t.Run("find correct angle", func(t *testing.T) {
+		assert.Equal(t, 45.0, AngleBetween(0, 0, 3, 3))
+		assert.Equal(t, -135.0, AngleBetween(3, 3, 0, 0))
+	})
+}

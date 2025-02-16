@@ -2,6 +2,7 @@ package csv
 
 import (
 	"fmt"
+	"github.com/johnfercher/go-turbo/internal/core/consts"
 	"reflect"
 )
 
@@ -54,6 +55,7 @@ func (t TurboPressureDAO) IsEmpty() bool {
 func (t TurboPressureDAO) ToArray() *TurboPressureDAOArray {
 	tType := reflect.ValueOf(t)
 	arr := &TurboPressureDAOArray{}
+	arr.Flow = append(arr.Flow, "0")
 
 	for i := 0; i < tType.NumField(); i++ {
 		psi := tType.FieldByName("Kg")
@@ -68,6 +70,13 @@ func (t TurboPressureDAO) ToArray() *TurboPressureDAOArray {
 				arr.Flow = append(arr.Flow, s)
 			}
 		}
+	}
+
+	greaterValue := arr.Flow[len(arr.Flow)-1]
+	toFill := consts.TurboMaxColumns - len(arr.Flow)
+
+	for i := 0; i < toFill; i++ {
+		arr.Flow = append(arr.Flow, greaterValue)
 	}
 
 	return arr

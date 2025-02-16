@@ -1,14 +1,11 @@
 package csv
 
 import (
-	"bytes"
 	"context"
-	"github.com/gocarina/gocsv"
+	"github.com/johnfercher/go-turbo/internal/core/consts"
 	"github.com/johnfercher/go-turbo/internal/core/models"
-	"github.com/johnfercher/go-turbo/internal/sort"
+	"github.com/johnfercher/go-turbo/internal/matrix"
 	"os"
-	"strconv"
-	"strings"
 )
 
 type TurboRepository struct {
@@ -24,97 +21,213 @@ func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Tu
 		return nil, err
 	}
 
-	var entries []*TurboPressureDAO
-	err = gocsv.Unmarshal(bytes.NewBuffer(b), &entries)
-	if err != nil {
-		return nil, err
-	}
+	data := Load(b)
 
-	valids := t.filterValids(entries)
-	arr := t.toArray(valids)
-	slices := t.getSlices(arr)
+	maxFlow := t.getMaxValue(data)
+	maxBoost := 200
+	padding := 50
+	maxFlow += padding
+	maxBoost += padding
 
-	return &models.Turbo{
-		Name:   turboFile,
-		Slices: slices,
-	}, nil
+	turbo := matrix.InitMatrix(200, maxFlow)
+	turbo = matrix.InterpolateLimits(turbo, data)
+	turbo = matrix.NormalizeWeights(turbo)
+
+	//turbo = t.computeBoost(turbo)
+	//turbo = t.computeHealth(turbo)
+
+	//matrix.PrintBoost(turbo)
+	//models.PrintWeight(turbo)
+	//models.PrintCFM(turbo)
+	//models.PrintHealth(turbo)
+	//models.PrintSurge(turbo)
+	//models.PrintChoke(turbo)
+
+	return models.NewTurbo(turboFile, turbo)
 }
 
-func (t *TurboRepository) getSlices(arr []*TurboPressureDAOArray) map[string][]*models.Range {
-	slices := make(map[string][]*models.Range)
-	for _, slice := range arr {
-		var ranges []*models.Range
+func (t *TurboRepository) computeHealth(turbo [][]*models.TurboScore) [][]*models.TurboScore {
+	for i := 0; i < len(turbo); i++ {
+		firstMaxWeight := 0.0
+		firstMaxWeightIndex := 0
+		beginChokeIndex := 0
+		for j := 0; j < len(turbo[i]); j++ {
+			if turbo[i][j].Choke && beginChokeIndex == 0 {
+				beginChokeIndex = j
+			}
+			if turbo[i][j].Surge || turbo[i][j].Choke {
+				continue
+			}
+			currentWeight := turbo[i][j].Weight
+			if currentWeight > firstMaxWeight {
+				firstMaxWeight = currentWeight
+				firstMaxWeightIndex = j
+			}
+		}
 
-		// find base line, the better range
-		base := 0
-		for i, f := range slice.Flow {
-			if IsBaseRange(f) {
-				base = i
+		entireChokeSurge := true
+		for j := 0; j < len(turbo[i]); j++ {
+			if !turbo[i][j].Surge && !turbo[i][j].Choke {
+				entireChokeSurge = false
 				break
 			}
 		}
 
-		baseScore := GetScoreFromBaseRange(slice.Flow[base])
-
-		// Add base line, the better range
-		ranges = append(ranges, &models.Range{
-			Min:    GetFlowFromBaseRange(slice.Flow[base]),
-			Max:    GetFlowFromBaseRange(slice.Flow[base+1]),
-			Health: baseScore,
-			Boost:  baseScore,
-		})
-
-		// Add bottom half
-		for i := base; i > 0; i-- {
-			ranges = append(ranges, &models.Range{
-				Min: GetFlowFromBaseRange(slice.Flow[i-1]),
-				Max: GetFlowFromBaseRange(slice.Flow[i]),
-			})
+		if entireChokeSurge {
+			continue
 		}
 
-		// Surge bottom
-		ranges = append(ranges, &models.Range{
-			Min: 0,
-			Max: GetFlowFromBaseRange(slice.Flow[0]),
-		})
-
-		// Add top half
-		for i := base; i < len(slice.Flow)-2; i++ {
-			ranges = append(ranges, &models.Range{
-				Min: GetFlowFromBaseRange(slice.Flow[i+1]),
-				Max: GetFlowFromBaseRange(slice.Flow[i+2]),
-			})
+		rateChoke := 1 / (float64(beginChokeIndex) - float64(firstMaxWeightIndex+1))
+		chokeIndex := 0.0
+		for j := 1; j < len(turbo[i]); j++ {
+			if j < firstMaxWeightIndex+1 {
+				if !turbo[i][j].Surge && !turbo[i][j].Choke {
+					turbo[i][j].Health = 1
+				}
+			} else {
+				if !turbo[i][j].Choke {
+					turbo[i][j].Health = 1 - (rateChoke * chokeIndex)
+					chokeIndex++
+				}
+			}
 		}
-
-		// Choke top
-		ranges = append(ranges, &models.Range{
-			Min: GetFlowFromBaseRange(slice.Flow[len(slice.Flow)-1]),
-			Max: 10000,
-		})
-
-		ranges = sort.Merge(ranges)
-
-		kg, _ := strconv.ParseFloat(strings.TrimSpace(slice.Kg), 64)
-		slices[models.KgKey(kg)] = ranges
 	}
 
-	return slices
+	return turbo
 }
 
-func (t *TurboRepository) toArray(valids []*TurboPressureDAO) []*TurboPressureDAOArray {
-	var arr []*TurboPressureDAOArray
-	for _, entry := range valids {
-		arr = append(arr, entry.ToArray())
-	}
-	return arr
-}
+func (t *TurboRepository) computeBoost(turbo [][]*models.TurboScore) [][]*models.TurboScore {
+	for i := 0; i < len(turbo); i++ {
+		firstMaxWeight := 0.0
+		firstMaxWeightIndex := 0
+		for j := 0; j < len(turbo[i]); j++ {
+			if turbo[i][j].Surge || turbo[i][j].Choke {
+				continue
+			}
+			currentWeight := turbo[i][j].Weight
+			if currentWeight > firstMaxWeight {
+				firstMaxWeight = currentWeight
+				firstMaxWeightIndex = j
+			}
+		}
 
-func (t *TurboRepository) filterValids(entries []*TurboPressureDAO) []*TurboPressureDAO {
-	var valids []*TurboPressureDAO
-	for _, entry := range entries {
-		if !entry.IsEmpty() {
-			valids = append(valids, entry)
+		entireChokeSurge := true
+		for j := 0; j < len(turbo[i]); j++ {
+			if !turbo[i][j].Surge && !turbo[i][j].Choke {
+				entireChokeSurge = false
+				break
+			}
+		}
+
+		if entireChokeSurge {
+			continue
+		}
+
+		beginValidIndex := 0
+		for j := 0; j < len(turbo[i]); j++ {
+			if !turbo[i][j].Surge {
+				beginValidIndex = j
+				break
+			}
+		}
+
+		maxBoost := consts.Boosts[i]
+		rateBoost := float64(beginValidIndex) / float64(firstMaxWeightIndex)
+		stepBoost := rateBoost * maxBoost
+		for j := 1; j < len(turbo[i]); j++ {
+			if j <= firstMaxWeightIndex {
+				if !turbo[i][j].Surge && !turbo[i][j].Choke {
+					turbo[i][j].Boost = stepBoost * float64(j)
+				}
+			} else {
+				turbo[i][j].Boost = maxBoost
+			}
 		}
 	}
-	return valids
+
+	return turbo
+}
+
+func (t *TurboRepository) buildTurboMatrixWithSurgeAndChoke(data [][]string) [][]*models.TurboScore {
+	var turbo [][]*models.TurboScore
+	for i := 0; i < len(data); i++ {
+		var line []*models.TurboScore
+
+		maxCFM := 0.0
+		for j := 0; j < len(data[i]); j++ {
+			if data[i][j] != "S" && data[i][j] != "C" {
+				cfm := models.GetFlowFromBaseRange(data[i][j])
+				if cfm > maxCFM {
+					maxCFM = cfm
+				}
+			}
+		}
+
+		// Define base surge/choke
+		for j := 0; j < len(data[i]); j++ {
+			if data[i][j] == "S" {
+				line = append(line, &models.TurboScore{
+					Boost:  0,
+					Health: 1,
+					CFM:    0,
+					Weight: 0,
+					Surge:  true,
+					Choke:  false,
+				})
+			} else if data[i][j] == "C" {
+				line = append(line, &models.TurboScore{
+					Boost:  0,
+					Health: 0,
+					CFM:    maxCFM,
+					Weight: 0,
+					Surge:  false,
+					Choke:  true,
+				})
+			} else {
+				cfm := models.GetFlowFromBaseRange(data[i][j])
+				score := models.GetScoreFromBaseRange(data[i][j])
+				line = append(line, &models.TurboScore{
+					Health: 0,
+					CFM:    cfm,
+					Weight: score,
+					Surge:  false,
+					Choke:  false,
+				})
+			}
+		}
+
+		turbo = append(turbo, line)
+	}
+	return turbo
+}
+
+func (t *TurboRepository) getMaxValue(data [][]string) int {
+	max := 0.0
+	for i := 0; i < len(data); i++ {
+		for j := 1; j < len(data[i]); j++ {
+			if models.IsBaseRange(data[i][j]) {
+				flow := models.GetFlowFromBaseRange(data[i][j])
+				if flow > max {
+					max = flow
+				}
+			}
+		}
+	}
+
+	return int(max)
+}
+
+func (t *TurboRepository) getMaxBoost(data [][]string) int {
+	max := 0
+	step := 0.2
+	for i := 0; i < len(data); i++ {
+		for j := 1; j < len(data[i]); j++ {
+			if models.IsBaseRange(data[i][j]) {
+				max = i
+				break
+			}
+		}
+	}
+
+	return int(100 * float64(max) * step)
 }

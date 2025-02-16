@@ -12,6 +12,9 @@ const (
 	Boost16 = 1.6
 	Boost18 = 1.8
 	Boost20 = 2.0
+
+	TurboMaxLines   = 10
+	TurboMaxColumns = 16
 )
 
 var Boosts = []float64{
