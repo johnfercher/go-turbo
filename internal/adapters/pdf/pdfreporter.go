@@ -2,12 +2,13 @@ package pdf
 
 import (
 	"context"
+	"fmt"
 	"github.com/johnfercher/go-turbo/internal/core/consts"
 	"github.com/johnfercher/go-turbo/internal/core/models"
 	"github.com/johnfercher/maroto/v2"
 	"github.com/johnfercher/maroto/v2/pkg/components/chart"
+	"github.com/johnfercher/maroto/v2/pkg/components/row"
 	"github.com/johnfercher/maroto/v2/pkg/config"
-	"github.com/johnfercher/maroto/v2/pkg/consts/orientation"
 	"github.com/johnfercher/maroto/v2/pkg/consts/pagesize"
 	"github.com/johnfercher/maroto/v2/pkg/props"
 )
@@ -24,17 +25,20 @@ func (p *pdfReporter) Generate(ctx context.Context, turbo [][]*models.TurboScore
 
 	cfg := config.NewBuilder().
 		WithDebug(true).
-		WithPageSize(pagesize.A1).
-		WithOrientation(orientation.Horizontal).
+		WithPageSize(pagesize.A4).
 		Build()
 
 	m := maroto.New(cfg)
 
-	m.AddRows(chart.NewHeatMapRow(300, "Efficiency", matrix, props.HeatMap{
-		TransparentValues: []int{0},
-		InvertScale:       false,
-		HalfColor:         false,
-	}))
+	m.AddRows(
+		row.New(200).Add(
+			chart.NewHeatMapCol(12, "Efficiency", matrix, props.HeatMap{
+				TransparentValues: []int{0},
+				InvertScale:       false,
+				HalfColor:         false,
+			}),
+		),
+	)
 
 	doc, err := m.Generate()
 	if err != nil {
@@ -45,10 +49,15 @@ func (p *pdfReporter) Generate(ctx context.Context, turbo [][]*models.TurboScore
 }
 
 func (p *pdfReporter) ToTurboEfficiencyMatrix(ctx context.Context, turbo [][]*models.TurboScore) [][]int {
+	xSize := len(turbo)
+	ySize := len(turbo[0])
+
+	fmt.Println(xSize, ySize)
+
 	var matrix [][]int
-	for i := 0; i < len(turbo); i++ {
+	for i := 0; i < xSize; i++ {
 		var line []int
-		for j := 0; j < len(turbo[i]); j++ {
+		for j := 0; j < ySize; j++ {
 			line = append(line, int(turbo[i][j].Weight))
 		}
 		matrix = append(matrix, line)
