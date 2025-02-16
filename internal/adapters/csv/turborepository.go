@@ -38,8 +38,6 @@ func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Tu
 		return nil, err
 	}
 
-	matrix.PrintWeight(m, true)
-
 	turbo := t.buildTurboMatrixWithSurgeAndChoke(data)
 	turbo = t.normalizeWeights(turbo)
 	turbo = t.computeBoost(turbo)

@@ -32,7 +32,8 @@ func (p *pdfReporter) Generate(ctx context.Context, turbo [][]*models.TurboScore
 
 	m.AddRows(chart.NewHeatMapRow(300, "Efficiency", matrix, props.HeatMap{
 		TransparentValues: []int{0},
-		InvertScale:       true,
+		InvertScale:       false,
+		HalfColor:         false,
 	}))
 
 	doc, err := m.Generate()

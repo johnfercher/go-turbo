@@ -30,24 +30,83 @@ func Val(matrix [][]*models.TurboScore, turbo [][]string) [][]*models.TurboScore
 	step := 20.0
 
 	// Find marks
-	var points Points
+	var halfBottomPoints Points
+	var halfTopPoints Points
+	var middlePoints Points
+
 	for i := 0; i < len(turbo); i++ {
+		halfBetterIndex := 0
+		better := 1000.0
 		for j := 0; j < len(turbo[i]); j++ {
 			turboString := turbo[i][j]
 			if !IsSurgeOrChoke(turboString) {
-				score := int(models.GetScoreFromBaseRange(turboString))
-				flow := int(models.GetFlowFromBaseRange(turboString))
+				score := models.GetScoreFromBaseRange(turboString)
+				if score < better {
+					better = score
+					halfBetterIndex = j
+				}
+			}
+		}
+
+		for j := halfBetterIndex; j <= halfBetterIndex+1; j++ {
+			turboString := turbo[i][j]
+			if !IsSurgeOrChoke(turboString) {
+				score := models.GetScoreFromBaseRange(turboString)
+				flow := models.GetFlowFromBaseRange(turboString)
 
 				stepX := float64(i) * step
 
-				points = append(points, Point{
-					X:     int(stepX),
+				middlePoints = append(middlePoints, Point{
+					X:     stepX,
+					Y:     flow,
+					Value: score,
+				})
+			}
+		}
+
+		for j := 0; j < halfBetterIndex; j++ {
+			turboString := turbo[i][j]
+			if !IsSurgeOrChoke(turboString) {
+				score := models.GetScoreFromBaseRange(turboString)
+				flow := models.GetFlowFromBaseRange(turboString)
+
+				stepX := float64(i) * step
+
+				halfBottomPoints = append(halfBottomPoints, Point{
+					X:     stepX,
+					Y:     flow,
+					Value: score,
+				})
+			}
+		}
+		for j := halfBetterIndex + 2; j < len(turbo[i]); j++ {
+			turboString := turbo[i][j]
+			if !IsSurgeOrChoke(turboString) {
+				score := models.GetScoreFromBaseRange(turboString)
+				flow := models.GetFlowFromBaseRange(turboString)
+
+				stepX := float64(i) * step
+
+				halfTopPoints = append(halfTopPoints, Point{
+					X:     stepX,
 					Y:     flow,
 					Value: score,
 				})
 			}
 		}
 	}
+
+	interQtd := 2
+	for i := 0; i < interQtd; i++ {
+		halfBottomPoints = halfBottomPoints.Interpolate(5, 10)
+		middlePoints = middlePoints.Interpolate(5, 10)
+		halfTopPoints = halfTopPoints.Interpolate(5, 10)
+	}
+
+	var points Points
+	points = append(points, halfBottomPoints...)
+	points = append(points, middlePoints...)
+	points = append(points, halfTopPoints...)
 
 	// Fill marks
 	xSize := len(matrix)
@@ -57,21 +116,6 @@ func Val(matrix [][]*models.TurboScore, turbo [][]string) [][]*models.TurboScore
 			score := points.GetValue(j, i)
 			if score != 0 {
 				matrix[j][i].Weight = float64(score)
-			}
-		}
-	}
-
-	for i := 0; i < ySize; i++ {
-		foundScore := false
-		lastScore := 0.0
-		for j := 0; j < xSize; j++ {
-			score := matrix[j][i].Weight
-			if score != 0 {
-				foundScore = true
-				lastScore = score
-			}
-			if foundScore {
-				matrix[j][i].Weight = lastScore
 			}
 		}
 	}

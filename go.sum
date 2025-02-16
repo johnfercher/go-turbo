@@ -13,6 +13,8 @@ github.com/campoy/embedmd v1.0.0/go.mod h1:oxyr9RCiSXg0M3VJ3ks0UGfp98BpSSGr0kpiX
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/edwardbrowncross/naturalneighbour v0.0.0-20180729010746-e470b61a4983 h1:JuUznrm+8+n1UXNvzgVyFzMDiNb1xVh7iQ7n8r4mHcA=
+github.com/edwardbrowncross/naturalneighbour v0.0.0-20180729010746-e470b61a4983/go.mod h1:EZs7XN9aB3a2AYKeGokd08FPRORBOMPwxEi2o5EAHFU=
 github.com/f-amaral/go-async v0.3.0 h1:h4kLsX7aKfdWaHvV0lf+/EE3OIeCzyeDYJDb/vDZUyg=
 github.com/f-amaral/go-async v0.3.0/go.mod h1:Hz5Qr6DAWpbTTUjytnrg1WIsDgS7NtOei5y8SipYS7U=
 github.com/go-fonts/liberation v0.3.3 h1:tM/T2vEOhjia6v5krQu8SDDegfH1SfXVRUNNKpq0Usk=
@@ -43,6 +45,12 @@ github.com/johnfercher/maroto/v2 v2.3.1-chart3 h1:sw4ojhPoJJIi+ZeU/FMSXmYvCSvh8D
 github.com/johnfercher/maroto/v2 v2.3.1-chart3/go.mod h1:/LfW6AQGZzsG6xUixcfyxkKztDoszdwC+G2jNRl8bss=
 github.com/johnfercher/maroto/v2 v2.3.1-chart4 h1:vi+mcnVTTNG4Zu146sLKr1WJ/J0h+UhXtdwSDoEUdZ0=
 github.com/johnfercher/maroto/v2 v2.3.1-chart4/go.mod h1:/LfW6AQGZzsG6xUixcfyxkKztDoszdwC+G2jNRl8bss=
+github.com/johnfercher/maroto/v2 v2.3.1-chart5 h1:/hxNPZTuI/8gvttc9k/DI7eGzzaK1zBaP28bGpXWCgE=
+github.com/johnfercher/maroto/v2 v2.3.1-chart5/go.mod h1:/LfW6AQGZzsG6xUixcfyxkKztDoszdwC+G2jNRl8bss=
+github.com/johnfercher/maroto/v2 v2.3.1-chart6 h1:m9oFM0fYEhii3UBAjK10hP1FUIiTw74aRxnb11xL29k=
+github.com/johnfercher/maroto/v2 v2.3.1-chart6/go.mod h1:/LfW6AQGZzsG6xUixcfyxkKztDoszdwC+G2jNRl8bss=
+github.com/johnfercher/maroto/v2 v2.3.1-chart7 h1:mWDJjV4/riA5swfNyM0TOp5E9tMXlo/bkGCIIj8fd00=
+github.com/johnfercher/maroto/v2 v2.3.1-chart7/go.mod h1:/LfW6AQGZzsG6xUixcfyxkKztDoszdwC+G2jNRl8bss=
 github.com/jung-kurt/gofpdf v1.0.0/go.mod h1:7Id9E/uU8ce6rXgefFLlgrJj/GYY22cpxn+r32jIOes=
 github.com/jung-kurt/gofpdf v1.16.2 h1:jgbatWHfRlPYiK85qgevsZTHviWXKwB1TTiKdz5PtRc=
 github.com/jung-kurt/gofpdf v1.16.2/go.mod h1:1hl7y57EsiPAkLbOwzpzqgx1A30nQCk/YmFV8S2vmK0=

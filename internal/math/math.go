@@ -1,5 +1,7 @@
 package math
 
+import "math"
+
 const (
 	ATM                 = 14.7
 	FourCylinderConst   = 0.5
@@ -25,4 +27,16 @@ func KgToATM(kg float64) float64 {
 
 func PressureRatio(psi float64) float64 {
 	return (psi + ATM) / ATM
+}
+
+func Distance(x1, y1, x2, y2 float64) float64 {
+	return math.Sqrt(((x1 - x2) * (x1 - x2)) + ((y1 - y2) * (y1 - y2)))
+}
+
+func AngleBetween(x1, y1, x2, y2 float64) float64 {
+	return RadianBetween(x1, y1, x2, y2) * (180.0 / math.Pi)
+}
+
+func RadianBetween(x1, y1, x2, y2 float64) float64 {
+	return math.Atan2(x2-x1, y2-y1)
 }
