@@ -32,7 +32,6 @@ func Val(matrix [][]*models.TurboScore, turbo [][]string) [][]*models.TurboScore
 	// Find marks
 	var halfBottomPoints Points
 	var halfTopPoints Points
-	var middlePoints Points
 
 	for i := 0; i < len(turbo); i++ {
 		halfBetterIndex := 0
@@ -48,23 +47,7 @@ func Val(matrix [][]*models.TurboScore, turbo [][]string) [][]*models.TurboScore
 			}
 		}
 
-		for j := halfBetterIndex; j <= halfBetterIndex+1; j++ {
-			turboString := turbo[i][j]
-			if !IsSurgeOrChoke(turboString) {
-				score := models.GetScoreFromBaseRange(turboString)
-				flow := models.GetFlowFromBaseRange(turboString)
-
-				stepX := float64(i) * step
-
-				middlePoints = append(middlePoints, Point{
-					X:     stepX,
-					Y:     flow,
-					Value: score,
-				})
-			}
-		}
-
-		for j := 0; j < halfBetterIndex; j++ {
+		for j := 0; j <= halfBetterIndex; j++ {
 			turboString := turbo[i][j]
 			if !IsSurgeOrChoke(turboString) {
 				score := models.GetScoreFromBaseRange(turboString)
@@ -79,7 +62,7 @@ func Val(matrix [][]*models.TurboScore, turbo [][]string) [][]*models.TurboScore
 				})
 			}
 		}
-		for j := halfBetterIndex + 2; j < len(turbo[i]); j++ {
+		for j := halfBetterIndex + 1; j < len(turbo[i]); j++ {
 			turboString := turbo[i][j]
 			if !IsSurgeOrChoke(turboString) {
 				score := models.GetScoreFromBaseRange(turboString)
@@ -96,28 +79,17 @@ func Val(matrix [][]*models.TurboScore, turbo [][]string) [][]*models.TurboScore
 		}
 	}
 
-	interQtd := 2
-	for i := 0; i < interQtd; i++ {
-		halfBottomPoints = halfBottomPoints.Interpolate(5, 10)
-		middlePoints = middlePoints.Interpolate(5, 10)
-		halfTopPoints = halfTopPoints.Interpolate(5, 10)
-	}
+	halfBottomPoints = halfBottomPoints.Interpolate()
+	halfTopPoints = halfTopPoints.Interpolate()
 
 	var points Points
 	points = append(points, halfBottomPoints...)
-	points = append(points, middlePoints...)
 	points = append(points, halfTopPoints...)
 
 	// Fill marks
-	xSize := len(matrix)
-	ySize := len(matrix[0])
-	for i := 0; i < ySize; i++ {
-		for j := 0; j < xSize; j++ {
-			score := points.GetValue(j, i)
-			if score != 0 {
-				matrix[j][i].Weight = float64(score)
-			}
-		}
+	for _, p := range points {
+		x, y, w := p.X, p.Y, p.Value
+		matrix[int(y)][int(x)].Weight = w
 	}
 
 	return matrix
