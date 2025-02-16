@@ -3,6 +3,7 @@ package matrix
 import (
 	"fmt"
 	"github.com/johnfercher/go-turbo/internal/core/models"
+	"gonum.org/v1/gonum/interp"
 )
 
 func InitMatrix(maxBoost int, maxFlow int) [][]float64 {
@@ -18,7 +19,7 @@ func InitMatrix(maxBoost int, maxFlow int) [][]float64 {
 	return matrix
 }
 
-func InterpolateLimits(matrix [][]float64, turbo [][]string) [][]float64 {
+func InterpolateLimitsY(matrix [][]float64, turbo [][]string) [][]float64 {
 	step := 20.0
 
 	// Find marks
@@ -112,6 +113,38 @@ func NormalizeWeights(turbo [][]float64) [][]float64 {
 	for i := 0; i < len(turbo); i++ {
 		for j := 0; j < len(turbo[i]); j++ {
 			turbo[i][j] = (1 + base - (turbo[i][j] / maxWeight)) * 100.0
+		}
+	}
+
+	return turbo
+}
+
+func InterpolateX(turbo [][]float64) [][]float64 {
+	xSize := len(turbo)
+	ySize := len(turbo[0])
+
+	for i := 0; i < ySize; i++ {
+		inter := interp.AkimaSpline{}
+		var xs []float64
+		var ys []float64
+		for j := 0; j < xSize; j++ {
+			if turbo[j][i] > 0 {
+				xs = append(xs, float64(j))
+				ys = append(ys, turbo[j][i])
+			}
+		}
+
+		if len(xs) < 2 || len(ys) < 2 {
+			continue
+		}
+
+		fmt.Println(xs, ys)
+
+		err := inter.Fit(xs, ys)
+		if err == nil {
+			for j := 0; j < xSize; j++ {
+				turbo[j][i] = inter.Predict(float64(j))
+			}
 		}
 	}
 

@@ -29,17 +29,9 @@ func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Tu
 	maxBoost += padding
 
 	turbo := matrix.InitMatrix(200, maxFlow)
-	turbo = matrix.InterpolateLimits(turbo, data)
+	turbo = matrix.InterpolateLimitsY(turbo, data)
 	turbo = matrix.NormalizeWeights(turbo)
-
-	//turbo = t.computeBoost(turbo)
-
-	//matrix.PrintBoost(turbo)
-	//models.PrintWeight(turbo)
-	//models.PrintCFM(turbo)
-	//models.PrintHealth(turbo)
-	//models.PrintSurge(turbo)
-	//models.PrintChoke(turbo)
+	turbo = matrix.InterpolateX(turbo)
 
 	return models.NewTurbo(turboFile, turbo)
 }
