@@ -2,7 +2,6 @@ package pdf
 
 import (
 	"context"
-	"fmt"
 	"github.com/johnfercher/go-turbo/internal/core/consts"
 	"github.com/johnfercher/go-turbo/internal/core/models"
 	"github.com/johnfercher/maroto/v2"
@@ -51,8 +50,6 @@ func (p *pdfReporter) Generate(ctx context.Context, turbo [][]*models.TurboScore
 func (p *pdfReporter) ToTurboEfficiencyMatrix(ctx context.Context, turbo [][]*models.TurboScore) [][]int {
 	xSize := len(turbo)
 	ySize := len(turbo[0])
-
-	fmt.Println(xSize, ySize)
 
 	var matrix [][]int
 	for i := 0; i < xSize; i++ {

@@ -2,13 +2,12 @@ package models
 
 import (
 	"fmt"
-	"github.com/johnfercher/go-turbo/internal/core/consts"
 	"gonum.org/v1/gonum/interp"
 )
 
 type Turbo struct {
 	Name        string
-	TurboScore  map[string][]*TurboScore
+	TurboScore  [][]*TurboScore
 	BoostInter  map[string]interp.AkimaSpline
 	HealthInter map[string]interp.AkimaSpline
 	WeightInter map[string]interp.AkimaSpline
@@ -17,43 +16,42 @@ type Turbo struct {
 func NewTurbo(name string, turboMatrix [][]*TurboScore) (*Turbo, error) {
 	t := &Turbo{
 		Name:        name,
-		TurboScore:  make(map[string][]*TurboScore),
+		TurboScore:  turboMatrix,
 		BoostInter:  make(map[string]interp.AkimaSpline),
 		HealthInter: make(map[string]interp.AkimaSpline),
 		WeightInter: make(map[string]interp.AkimaSpline),
 	}
 
-	for i, turboLine := range turboMatrix {
-		if isAllSurgeChoke(turboLine) {
-			continue
+	/*
+		for i, turboLine := range turboMatrix {
+			if isAllSurgeChoke(turboLine) {
+				continue
+			}
+
+			t.TurboScore[KgKey(boost)] = turboLine
+
+			// Boost
+			boostInter, err := buildBoostInter(turboLine)
+			if err != nil {
+				return nil, err
+			}
+			t.BoostInter[KgKey(boost)] = boostInter
+
+			// Health
+			healthInter, err := buildHealthInter(turboLine)
+			if err != nil {
+				return nil, err
+			}
+			t.HealthInter[KgKey(boost)] = healthInter
+
+			// Weight
+			weightInter, err := buildWeightInter(turboLine)
+			if err != nil {
+				return nil, err
+			}
+			t.WeightInter[KgKey(boost)] = weightInter
 		}
-
-		boost := consts.Boosts[i]
-
-		t.TurboScore[KgKey(boost)] = turboLine
-
-		// Boost
-		boostInter, err := buildBoostInter(turboLine)
-		if err != nil {
-			return nil, err
-		}
-		t.BoostInter[KgKey(boost)] = boostInter
-
-		// Health
-		healthInter, err := buildHealthInter(turboLine)
-		if err != nil {
-			return nil, err
-		}
-		t.HealthInter[KgKey(boost)] = healthInter
-
-		// Weight
-		weightInter, err := buildWeightInter(turboLine)
-		if err != nil {
-			return nil, err
-		}
-		t.WeightInter[KgKey(boost)] = weightInter
-	}
-
+	*/
 	return t, nil
 }
 

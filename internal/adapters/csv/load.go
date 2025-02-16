@@ -95,12 +95,5 @@ func addWeightsOutsideSurgeChoke(data [][]string) [][]string {
 		}
 	}
 
-	/*for i := 0; i < len(data); i++ {
-		for j := 0; j < len(data[i]); j++ {
-			fmt.Print(data[i][j], " ")
-		}
-		fmt.Println()
-	}*/
-
 	return data
 }

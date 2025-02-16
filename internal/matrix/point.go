@@ -1,7 +1,6 @@
 package matrix
 
 import (
-	"fmt"
 	"gonum.org/v1/gonum/interp"
 )
 
@@ -54,8 +53,6 @@ func (p Points) Interpolate() Points {
 			xs = append(xs, point.X)
 			ys = append(ys, point.Y)
 		}
-
-		fmt.Println(xs, ys)
 
 		_ = inter.Fit(xs, ys)
 

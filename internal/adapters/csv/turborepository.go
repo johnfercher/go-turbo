@@ -2,8 +2,6 @@ package csv
 
 import (
 	"context"
-	"fmt"
-	"github.com/johnfercher/go-turbo/internal/adapters/pdf"
 	"github.com/johnfercher/go-turbo/internal/core/consts"
 	"github.com/johnfercher/go-turbo/internal/core/models"
 	"github.com/johnfercher/go-turbo/internal/matrix"
@@ -26,24 +24,19 @@ func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Tu
 	data := Load(b)
 
 	maxFlow := t.getMaxValue(data)
-	fmt.Println(maxFlow)
+	maxBoost := 200
+	padding := 50
+	maxFlow += padding
+	maxBoost += padding
 
-	m := matrix.InitMatrix(200, maxFlow)
+	turbo := matrix.InitMatrix(200, maxFlow)
+	turbo = matrix.InterpolateLimits(turbo, data)
+	turbo = matrix.NormalizeWeights(turbo)
 
-	m = matrix.Val(m, data)
+	//turbo = t.computeBoost(turbo)
+	//turbo = t.computeHealth(turbo)
 
-	pdfReporter := pdf.NewPdfReporter()
-	err = pdfReporter.Generate(ctx, m, consts.TurboEfficiency)
-	if err != nil {
-		return nil, err
-	}
-
-	turbo := t.buildTurboMatrixWithSurgeAndChoke(data)
-	turbo = t.normalizeWeights(turbo)
-	turbo = t.computeBoost(turbo)
-	turbo = t.computeHealth(turbo)
-
-	//models.PrintBoost(turbo)
+	//matrix.PrintBoost(turbo)
 	//models.PrintWeight(turbo)
 	//models.PrintCFM(turbo)
 	//models.PrintHealth(turbo)
@@ -51,35 +44,6 @@ func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Tu
 	//models.PrintChoke(turbo)
 
 	return models.NewTurbo(turboFile, turbo)
-}
-
-func (t *TurboRepository) normalizeWeights(turbo [][]*models.TurboScore) [][]*models.TurboScore {
-	// Add all max to invalid points
-	maxWeight := 0.0
-	for i := 0; i < len(turbo); i++ {
-		for j := 0; j < len(turbo[i]); j++ {
-			if turbo[i][j].Weight > maxWeight {
-				maxWeight = turbo[i][j].Weight
-			}
-		}
-	}
-
-	for i := 0; i < len(turbo); i++ {
-		for j := 0; j < len(turbo[i]); j++ {
-			if turbo[i][j].Weight == 0 {
-				turbo[i][j].Weight = maxWeight + 1
-			}
-		}
-	}
-
-	base := 1 / maxWeight
-	for i := 0; i < len(turbo); i++ {
-		for j := 0; j < len(turbo[i]); j++ {
-			turbo[i][j].Weight = 1 + base - (turbo[i][j].Weight / maxWeight)
-		}
-	}
-
-	return turbo
 }
 
 func (t *TurboRepository) computeHealth(turbo [][]*models.TurboScore) [][]*models.TurboScore {
