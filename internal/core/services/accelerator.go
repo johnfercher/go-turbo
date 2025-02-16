@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"fmt"
-	"github.com/johnfercher/go-turbo/internal/core/consts"
 	"github.com/johnfercher/go-turbo/internal/core/ports"
 )
 
@@ -35,7 +34,7 @@ func (a *Accelerator) Simulate(ctx context.Context, engineModel string, turboMod
 		return err
 	}
 
-	err = a.pdfReporter.Generate(ctx, turbo.TurboScore, consts.TurboEfficiency)
+	err = a.pdfReporter.Generate(ctx, turbo.TurboScore)
 	if err != nil {
 		return err
 	}

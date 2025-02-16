@@ -2,8 +2,6 @@ package pdf
 
 import (
 	"context"
-	"github.com/johnfercher/go-turbo/internal/core/consts"
-	"github.com/johnfercher/go-turbo/internal/core/models"
 	"github.com/johnfercher/maroto/v2"
 	"github.com/johnfercher/maroto/v2/pkg/components/chart"
 	"github.com/johnfercher/maroto/v2/pkg/components/row"
@@ -19,7 +17,7 @@ func NewPdfReporter() *pdfReporter {
 	return &pdfReporter{}
 }
 
-func (p *pdfReporter) Generate(ctx context.Context, turbo [][]*models.TurboScore, reportType consts.ReportType) error {
+func (p *pdfReporter) Generate(ctx context.Context, turbo [][]float64) error {
 	matrix := p.ToTurboEfficiencyMatrix(ctx, turbo)
 
 	cfg := config.NewBuilder().
@@ -47,7 +45,7 @@ func (p *pdfReporter) Generate(ctx context.Context, turbo [][]*models.TurboScore
 	return doc.Save("current.pdf")
 }
 
-func (p *pdfReporter) ToTurboEfficiencyMatrix(ctx context.Context, turbo [][]*models.TurboScore) [][]int {
+func (p *pdfReporter) ToTurboEfficiencyMatrix(ctx context.Context, turbo [][]float64) [][]int {
 	xSize := len(turbo)
 	ySize := len(turbo[0])
 
@@ -55,7 +53,7 @@ func (p *pdfReporter) ToTurboEfficiencyMatrix(ctx context.Context, turbo [][]*mo
 	for i := 0; i < xSize; i++ {
 		var line []int
 		for j := 0; j < ySize; j++ {
-			line = append(line, int(turbo[i][j].Weight))
+			line = append(line, int(turbo[i][j]))
 		}
 		matrix = append(matrix, line)
 	}

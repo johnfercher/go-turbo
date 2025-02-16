@@ -5,15 +5,12 @@ import (
 	"github.com/johnfercher/go-turbo/internal/core/models"
 )
 
-func InitMatrix(maxBoost int, maxFlow int) [][]*models.TurboScore {
-	var matrix [][]*models.TurboScore
+func InitMatrix(maxBoost int, maxFlow int) [][]float64 {
+	var matrix [][]float64
 	for i := 0; i < maxFlow; i++ {
-		var flow []*models.TurboScore
+		var flow []float64
 		for j := 0; j < maxBoost; j++ {
-			flow = append(flow, &models.TurboScore{
-				Boost: float64(i),
-				CFM:   float64(j),
-			})
+			flow = append(flow, 0)
 		}
 		matrix = append(matrix, flow)
 	}
@@ -21,7 +18,7 @@ func InitMatrix(maxBoost int, maxFlow int) [][]*models.TurboScore {
 	return matrix
 }
 
-func InterpolateLimits(matrix [][]*models.TurboScore, turbo [][]string) [][]*models.TurboScore {
+func InterpolateLimits(matrix [][]float64, turbo [][]string) [][]float64 {
 	step := 20.0
 
 	// Find marks
@@ -84,19 +81,19 @@ func InterpolateLimits(matrix [][]*models.TurboScore, turbo [][]string) [][]*mod
 	// Fill marks
 	for _, p := range points {
 		x, y, w := p.X, p.Y, p.Value
-		matrix[int(y)][int(x)].Weight = w
+		matrix[int(y)][int(x)] = w
 	}
 
 	return matrix
 }
 
-func NormalizeWeights(turbo [][]*models.TurboScore) [][]*models.TurboScore {
+func NormalizeWeights(turbo [][]float64) [][]float64 {
 	// Add all max to invalid points
 	maxWeight := 0.0
 	for i := 0; i < len(turbo); i++ {
 		for j := 0; j < len(turbo[i]); j++ {
-			if turbo[i][j].Weight > maxWeight {
-				maxWeight = turbo[i][j].Weight
+			if turbo[i][j] > maxWeight {
+				maxWeight = turbo[i][j]
 			}
 		}
 	}
@@ -105,8 +102,8 @@ func NormalizeWeights(turbo [][]*models.TurboScore) [][]*models.TurboScore {
 
 	for i := 0; i < len(turbo); i++ {
 		for j := 0; j < len(turbo[i]); j++ {
-			if turbo[i][j].Weight == 0 {
-				turbo[i][j].Weight = maxWeight + 1
+			if turbo[i][j] == 0 {
+				turbo[i][j] = maxWeight + 1
 			}
 		}
 	}
@@ -114,7 +111,7 @@ func NormalizeWeights(turbo [][]*models.TurboScore) [][]*models.TurboScore {
 	base := 1 / maxWeight
 	for i := 0; i < len(turbo); i++ {
 		for j := 0; j < len(turbo[i]); j++ {
-			turbo[i][j].Weight = (1 + base - (turbo[i][j].Weight / maxWeight)) * 100.0
+			turbo[i][j] = (1 + base - (turbo[i][j] / maxWeight)) * 100.0
 		}
 	}
 

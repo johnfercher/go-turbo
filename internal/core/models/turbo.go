@@ -7,13 +7,13 @@ import (
 
 type Turbo struct {
 	Name        string
-	TurboScore  [][]*TurboScore
+	TurboScore  [][]float64
 	BoostInter  map[string]interp.AkimaSpline
 	HealthInter map[string]interp.AkimaSpline
 	WeightInter map[string]interp.AkimaSpline
 }
 
-func NewTurbo(name string, turboMatrix [][]*TurboScore) (*Turbo, error) {
+func NewTurbo(name string, turboMatrix [][]float64) (*Turbo, error) {
 	t := &Turbo{
 		Name:        name,
 		TurboScore:  turboMatrix,
@@ -87,6 +87,7 @@ func (t *Turbo) Get(cfm float64, configuredBoost float64) (surge bool, choke boo
 	return
 }
 
+/*
 func buildBoostInter(turboScore []*TurboScore) (interp.AkimaSpline, error) {
 	inter := interp.AkimaSpline{}
 	xs := []float64{}
@@ -117,7 +118,7 @@ func buildHealthInter(turboScore []*TurboScore) (interp.AkimaSpline, error) {
 	return inter, inter.Fit(xs, ys)
 }
 
-func buildWeightInter(turboScore []*TurboScore) (interp.AkimaSpline, error) {
+func buildWeightInter(turboScore []float64) (interp.AkimaSpline, error) {
 	inter := interp.AkimaSpline{}
 	xs := []float64{}
 	ys := []float64{}
@@ -154,3 +155,4 @@ func isAllSurgeChoke(turboScore []*TurboScore) bool {
 
 	return true
 }
+*/
