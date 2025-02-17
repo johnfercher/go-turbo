@@ -138,12 +138,26 @@ func InterpolateX(turbo [][]float64) [][]float64 {
 			continue
 		}
 
-		fmt.Println(xs, ys)
+		min := 10000.0
+		minIndex := 0
+		max := 0.0
+		maxIndex := 0
+		for j := 0; j < xSize; j++ {
+			if turbo[j][i] > max && turbo[j][i] != 0 {
+				maxIndex = j
+			}
+			if turbo[j][i] < min && turbo[j][i] != 0 {
+				min = turbo[j][i]
+				minIndex = j
+			}
+		}
 
 		err := inter.Fit(xs, ys)
 		if err == nil {
 			for j := 0; j < xSize; j++ {
-				turbo[j][i] = inter.Predict(float64(j))
+				if j >= minIndex && j <= maxIndex {
+					turbo[j][i] = inter.Predict(float64(j))
+				}
 			}
 		}
 	}
