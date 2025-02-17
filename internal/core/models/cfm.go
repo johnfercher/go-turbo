@@ -19,6 +19,6 @@ func (c *CFM) AddBoostKg(kg float64) *CFM {
 	return &CFM{
 		RPM:     c.RPM,
 		Percent: c.Percent,
-		Flow:    c.Flow * math.PressureRatio(math.KgToATM(kg)),
+		Flow:    c.Flow * math.PressureRatio(math.KgToATM(kg/100.0)),
 	}
 }

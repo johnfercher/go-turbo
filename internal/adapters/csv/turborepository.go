@@ -33,7 +33,7 @@ func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Tu
 	turbo = matrix.NormalizeWeights(turbo)
 	turbo = matrix.InterpolateX(turbo)
 
-	return models.NewTurbo(turboFile, turbo)
+	return models.NewTurbo(turboFile, turbo), nil
 }
 
 func (t *TurboRepository) getMaxValue(data [][]string) int {

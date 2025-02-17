@@ -2,7 +2,6 @@ package csv
 
 import (
 	"fmt"
-	"github.com/johnfercher/go-turbo/internal/core/consts"
 	"reflect"
 )
 
@@ -73,7 +72,7 @@ func (t TurboPressureDAO) ToArray() *TurboPressureDAOArray {
 	}
 
 	greaterValue := arr.Flow[len(arr.Flow)-1]
-	toFill := consts.TurboMaxColumns - len(arr.Flow)
+	toFill := 16 - len(arr.Flow)
 
 	for i := 0; i < toFill; i++ {
 		arr.Flow = append(arr.Flow, greaterValue)
