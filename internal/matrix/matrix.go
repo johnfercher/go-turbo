@@ -1,7 +1,6 @@
 package matrix
 
 import (
-	"fmt"
 	"github.com/johnfercher/go-turbo/internal/core/models"
 	"gonum.org/v1/gonum/interp"
 )
@@ -98,8 +97,6 @@ func NormalizeWeights(turbo [][]float64) [][]float64 {
 			}
 		}
 	}
-
-	fmt.Println(maxWeight)
 
 	for i := 0; i < len(turbo); i++ {
 		for j := 0; j < len(turbo[i]); j++ {

@@ -2,6 +2,8 @@ package pdf
 
 import (
 	"context"
+	"fmt"
+	"github.com/johnfercher/go-turbo/internal/core/models"
 	"github.com/johnfercher/maroto/v2"
 	"github.com/johnfercher/maroto/v2/pkg/components/chart"
 	"github.com/johnfercher/maroto/v2/pkg/components/row"
@@ -17,8 +19,8 @@ func NewPdfReporter() *pdfReporter {
 	return &pdfReporter{}
 }
 
-func (p *pdfReporter) Generate(ctx context.Context, turbo [][]float64) error {
-	matrix := p.ToTurboEfficiencyMatrix(ctx, turbo)
+func (p *pdfReporter) Generate(ctx context.Context, report *models.Report) error {
+	matrix := p.ToTurboEfficiencyMatrix(ctx, report.Turbo.TurboScore)
 
 	cfg := config.NewBuilder().
 		WithDebug(true).
@@ -42,7 +44,7 @@ func (p *pdfReporter) Generate(ctx context.Context, turbo [][]float64) error {
 		return err
 	}
 
-	return doc.Save("current.pdf")
+	return doc.Save(fmt.Sprintf("%s-%s-%.0f.pdf", report.Engine.Name, report.Turbo.Name, report.Boost))
 }
 
 func (p *pdfReporter) ToTurboEfficiencyMatrix(ctx context.Context, turbo [][]float64) [][]int {

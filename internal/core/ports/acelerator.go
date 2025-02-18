@@ -2,8 +2,9 @@ package ports
 
 import (
 	"context"
+	"github.com/johnfercher/go-turbo/internal/core/models"
 )
 
 type Accelerator interface {
-	Simulate(ctx context.Context, engineModel string, turboModel string, boost float64) error
+	Simulate(ctx context.Context, simulations []*models.Simulation) error
 }

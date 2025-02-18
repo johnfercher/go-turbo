@@ -13,6 +13,10 @@ func CubicInchToCubicFeet(inch float64) float64 {
 	return inch / CubicFeetConversion
 }
 
+func CubicFeetToLbsMin(cfm float64) float64 {
+	return cfm * 0.069
+}
+
 func LitersToCubicInch(liters float64) float64 {
 	return liters / LitersToCID
 }

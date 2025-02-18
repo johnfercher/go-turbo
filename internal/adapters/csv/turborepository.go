@@ -33,6 +33,18 @@ func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Tu
 	turbo = matrix.NormalizeWeights(turbo)
 	turbo = matrix.InterpolateX(turbo)
 
+	/*var s string
+	xSize := len(turbo)
+	ySize := len(turbo[0])
+	for i := 0; i < ySize; i++ {
+		for j := 0; j < xSize; j++ {
+			s += fmt.Sprintf("%.0f ", turbo[j][i])
+		}
+		s += fmt.Sprintf("\n")
+	}
+
+	os.WriteFile("save.csv", []byte(s), 0644)*/
+
 	return models.NewTurbo(turboFile, turbo), nil
 }
 

@@ -2,53 +2,64 @@ package services
 
 import (
 	"context"
-	"fmt"
+	"github.com/johnfercher/go-turbo/internal/core/models"
 	"github.com/johnfercher/go-turbo/internal/core/ports"
+	"github.com/johnfercher/go-turbo/internal/math"
 )
 
 type Accelerator struct {
-	engineRepo  ports.EngineRepository
-	turboRepo   ports.TurboRepository
-	pdfReporter ports.Reporter
+	engineRepo ports.EngineRepository
+	turboRepo  ports.TurboRepository
+	reporter   ports.Reporter
 }
 
-func NewAccelerator(engineRepo ports.EngineRepository, turboRepo ports.TurboRepository,
-	pdfReporter ports.Reporter) *Accelerator {
+func NewAccelerator(engineRepo ports.EngineRepository, turboRepo ports.TurboRepository, reporter ports.Reporter) *Accelerator {
 	return &Accelerator{
-		engineRepo:  engineRepo,
-		turboRepo:   turboRepo,
-		pdfReporter: pdfReporter,
+		engineRepo: engineRepo,
+		turboRepo:  turboRepo,
+		reporter:   reporter,
 	}
 }
 
-func (a *Accelerator) Simulate(ctx context.Context, engineModel string, turboModel string, boost float64) error {
-	engine, err := a.engineRepo.Get(ctx, engineModel)
-	if err != nil {
-		return err
-	}
+func (a *Accelerator) Simulate(ctx context.Context, simulations []*models.Simulation) error {
+	for _, simulation := range simulations {
+		report, err := a.simulate(ctx, simulation)
+		if err != nil {
+			return err
+		}
 
-	fmt.Print(engine)
-
-	turbo, err := a.turboRepo.Get(ctx, turboModel)
-	if err != nil {
-		return err
-	}
-
-	err = a.pdfReporter.Generate(ctx, turbo.TurboScore)
-	if err != nil {
-		return err
-	}
-
-	revLimiter := 7500
-	printRev := 500
-	for i := 0; i <= revLimiter; i++ {
-
-		if i%printRev == 0 {
-			cfm := engine.Get(float64(i), boost)
-			health := turbo.Get(cfm.Flow, boost)
-			fmt.Printf("RPM: %d, CFM: %.2f, Health: %.2f\n", i, cfm.Flow, health)
+		err = a.reporter.Generate(ctx, report)
+		if err != nil {
+			return err
 		}
 	}
 
-	return err
+	return nil
+}
+
+func (a *Accelerator) simulate(ctx context.Context, simulation *models.Simulation) (*models.Report, error) {
+	engine, err := a.engineRepo.Get(ctx, simulation.Engine)
+	if err != nil {
+		return nil, err
+	}
+
+	turbo, err := a.turboRepo.Get(ctx, simulation.Turbo)
+	if err != nil {
+		return nil, err
+	}
+
+	revLimiter := 7500
+	revMin := 2000
+
+	report := models.NewReport(engine, turbo, simulation.Boost)
+
+	for i := revMin; i <= revLimiter; i++ {
+		cfm := engine.Get(float64(i), simulation.Boost)
+		health := turbo.Get(cfm.Flow, simulation.Boost)
+		lbs := math.CubicFeetToLbsMin(cfm.Flow)
+
+		report.Add(i, lbs, health)
+	}
+
+	return report, nil
 }
