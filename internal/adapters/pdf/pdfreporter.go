@@ -41,7 +41,7 @@ func (p *pdfReporter) Generate(ctx context.Context, reports []*models.Report) er
 		return err
 	}
 
-	return doc.Save(fmt.Sprintf("%s-%s.pdf", reports[0].Engine.Name, reports[0].Turbo.Name))
+	return doc.Save(fmt.Sprintf("%s.pdf", reports[0].Engine.Name))
 }
 
 func (p *pdfReporter) generate(ctx context.Context, m core.Maroto, report *models.Report) error {
