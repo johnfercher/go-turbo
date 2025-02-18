@@ -36,7 +36,7 @@ func main() {
 		{
 			Engine: "ej20",
 			Turbo:  "kinugawa-td05-18g",
-			Boost:  120,
+			Boost:  119,
 			RevMin: 3000,
 			RevMax: 7500,
 		},
