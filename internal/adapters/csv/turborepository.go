@@ -2,9 +2,11 @@ package csv
 
 import (
 	"context"
+	"fmt"
 	"github.com/johnfercher/go-turbo/internal/core/models"
 	"github.com/johnfercher/go-turbo/internal/matrix"
 	"os"
+	"strings"
 )
 
 type TurboRepository struct {
@@ -15,7 +17,8 @@ func NewTurboRepository() *TurboRepository {
 }
 
 func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Turbo, error) {
-	b, err := os.ReadFile("data/turbo/" + turboFile + ".csv")
+	fileName := TurboFilePath(turboFile)
+	b, err := os.ReadFile(fileName)
 	if err != nil {
 		return nil, err
 	}
@@ -33,19 +36,12 @@ func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Tu
 	turbo = matrix.NormalizeWeights(turbo)
 	turbo = matrix.InterpolateX(turbo)
 
-	/*var s string
-	xSize := len(turbo)
-	ySize := len(turbo[0])
-	for i := 0; i < ySize; i++ {
-		for j := 0; j < xSize; j++ {
-			s += fmt.Sprintf("%.0f ", turbo[j][i])
-		}
-		s += fmt.Sprintf("\n")
-	}
-
-	os.WriteFile("save.csv", []byte(s), 0644)*/
-
 	return models.NewTurbo(turboFile, turbo), nil
+}
+
+func (t *TurboRepository) Save(ctx context.Context, name string, chart *models.Chart) error {
+	s := Turbo(chart.ToMatrix())
+	return os.WriteFile(TurboFilePath(name), []byte(s), os.ModePerm)
 }
 
 func (t *TurboRepository) getMaxValue(data [][]string) int {
@@ -77,4 +73,22 @@ func (t *TurboRepository) getMaxBoost(data [][]string) int {
 	}
 
 	return int(100 * float64(max) * step)
+}
+
+func TurboFilePath(name string) string {
+	return fmt.Sprintf("data/turbo/%s.csv", name)
+}
+
+func Turbo(turbo [][]string) string {
+	s := "kg,col1,col2,col3,col4,col5,col6,col7,col8,col9,col10,col11,col12,col13,col14,col15,col16\n"
+
+	for i := 0; i < len(turbo); i++ {
+		var line []string
+		for j := 0; j < len(turbo[i]); j++ {
+			line = append(line, turbo[i][j])
+		}
+		s += strings.Join(line, ",") + "\n"
+	}
+
+	return s
 }

@@ -3,9 +3,9 @@ package main
 type StateType string
 
 const (
-	GetBorders StateType = "get_borders"
-	GetScales  StateType = "get_scale_y"
-	GetScaleX  StateType = "get_scale_x"
+	GetBorders    StateType = "get_borders"
+	GetScales     StateType = "get_scale_y"
+	GetEfficiency StateType = "get_scale_x"
 )
 
 type State struct {
