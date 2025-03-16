@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"github.com/johnfercher/go-turbo/internal/core/models/fuel"
 	"github.com/johnfercher/go-turbo/internal/math"
 	"github.com/johnfercher/maroto/v2/pkg/components/row"
 	"github.com/johnfercher/maroto/v2/pkg/components/text"
@@ -30,15 +31,17 @@ var whiteColor = &props.Color{
 type Report struct {
 	Engine  *Engine
 	Turbo   *Turbo
+	Fuel    *fuel.Fuel
 	Boost   float64
 	Entries Entries
 	maxLbs  float64
 }
 
-func NewReport(engine *Engine, turbo *Turbo, boost float64) *Report {
+func NewReport(engine *Engine, turbo *Turbo, fuel *fuel.Fuel, boost float64) *Report {
 	return &Report{
 		Engine: engine,
 		Turbo:  turbo,
+		Fuel:   fuel,
 		Boost:  boost,
 	}
 }
@@ -46,7 +49,7 @@ func NewReport(engine *Engine, turbo *Turbo, boost float64) *Report {
 func (r *Report) Add(rpm int, cfm float64, health float64) {
 	lbsMin := math.CubicFeetToLbsMin(cfm)
 
-	power := NewPower(lbsMin, rpm, r.Engine.CompressionRatio, r.Engine.BoostGainRatio)
+	power := NewPower(lbsMin, rpm, r.Fuel, r.Engine)
 
 	e := &Entry{
 		RPM:        rpm,
@@ -72,31 +75,30 @@ func (e Entry) GetHeader() core.Row {
 		Add(
 			text.NewCol(2, "RPM", props.Text{Color: whiteColor}),
 			text.NewCol(2, "CFM", props.Text{Color: whiteColor}),
-			text.NewCol(2, "LBS/Min", props.Text{Color: whiteColor}),
-			text.NewCol(2, "Health", props.Text{Color: whiteColor}),
-			text.NewCol(2, "Torque", props.Text{Color: whiteColor}),
-			text.NewCol(2, "Power", props.Text{Color: whiteColor}),
-			text.NewCol(2, "Torque E85", props.Text{Color: whiteColor}),
-			text.NewCol(2, "Power E85", props.Text{Color: whiteColor}),
+			text.NewCol(3, "LBS/Min", props.Text{Color: whiteColor}),
+			text.NewCol(3, "Health", props.Text{Color: whiteColor}),
+			text.NewCol(3, "Torque", props.Text{Color: whiteColor}),
+			text.NewCol(3, "Power", props.Text{Color: whiteColor}),
 		).WithStyle(
 		&props.Cell{
 			BackgroundColor: darkGrayColor,
 		})
 }
 
+func (e Entry) Values() []core.Col {
+	return []core.Col{
+		text.NewCol(2, fmt.Sprintf("%d", e.RPM)),
+		text.NewCol(2, fmt.Sprintf("%.2f", e.CFM)),
+		text.NewCol(3, fmt.Sprintf("%.2f", e.LbsMin)),
+		text.NewCol(3, fmt.Sprintf("%.2f", e.Health)),
+		text.NewCol(3, fmt.Sprintf("%.2f Kg", e.Crankshaft.Torque)),
+		text.NewCol(3, fmt.Sprintf("%.2f HP", e.Crankshaft.HP)),
+	}
+}
+
 func (e Entry) GetContent(i int) core.Row {
 	r := row.New(5).
-		Add(
-			text.NewCol(2, fmt.Sprintf("%d", e.RPM)),
-			text.NewCol(2, fmt.Sprintf("%.2f", e.CFM)),
-			text.NewCol(2, fmt.Sprintf("%.2f", e.LbsMin)),
-			text.NewCol(2, fmt.Sprintf("%.2f", e.Health)),
-			text.NewCol(2, fmt.Sprintf("%.2f Kg", e.Crankshaft.Torque)),
-			text.NewCol(2, fmt.Sprintf("%.2f HP", e.Crankshaft.HP)),
-			text.NewCol(2, fmt.Sprintf("%.2f Kg", e.Crankshaft.ToE85().Torque)),
-			text.NewCol(2, fmt.Sprintf("%.2f HP", e.Crankshaft.ToE85().HP)),
-		)
-
+		Add(e.Values()...)
 	if i%2 != 0 {
 		r.WithStyle(&props.Cell{
 			BackgroundColor: lightGrayColor,
@@ -141,8 +143,11 @@ type Power struct {
 	Torque float64
 }
 
-func NewPower(lbsMin float64, rpm int, compressionRatio float64, boostGainRatio float64) *Power {
-	hp := lbsMin * compressionRatio * boostGainRatio
+func NewPower(lbsMin float64, rpm int, f *fuel.Fuel, engine *Engine) *Power {
+
+	powerGain := f.Compare(fuel.Gasoline100())
+	hp := lbsMin * engine.CompressionRatio * powerGain * engine.EfficiencyRatio
+
 	return &Power{
 		HP:     hp,
 		Torque: math.FootToKgfm(math.HorsepowerToTorque(hp, rpm)),

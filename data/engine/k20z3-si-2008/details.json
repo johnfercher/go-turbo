@@ -2,6 +2,8 @@
   "name": "K20Z3-SI-2008",
   "liters": 2.0,
   "cylinders": 4,
+  "efficiency_ratio": 0.95,
   "boost_gain_ratio": 1.20,
-  "compression_ratio": 11.0
+  "compression_ratio": 11.0,
+  "link": "https://www.carrosnaweb.com.br/fichadetalhe.asp?token=fdc150abdd2b914c1e760d6092a80767&codigo=7630"
 }

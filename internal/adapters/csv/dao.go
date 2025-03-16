@@ -9,6 +9,7 @@ type EngineDetails struct {
 	Name             string  `json:"name"`
 	Liters           float64 `json:"liters"`
 	Cylinders        int     `json:"cylinders"`
+	EfficiencyRatio  float64 `json:"efficiency_ratio"`
 	BoostGainRatio   float64 `json:"boost_gain_ratio"`
 	CompressionRatio float64 `json:"compression_ratio"`
 }

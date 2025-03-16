@@ -11,16 +11,18 @@ type Engine struct {
 	Liters           float64
 	Cylinders        int
 	CompressionRatio float64
+	EfficiencyRatio  float64
 	BoostGainRatio   float64
 	VE               []*VE
 	VEInter          interp.AkimaSpline
 }
 
-func NewEngine(name string, cylinders int, liters float64, compressionRatio float64, boostGainRatio float64, ve []*VE) (*Engine, error) {
+func NewEngine(name string, cylinders int, liters float64, efficiencyRatio float64, compressionRatio float64, boostGainRatio float64, ve []*VE) (*Engine, error) {
 	e := &Engine{
 		Name:             name,
 		Liters:           liters,
 		Cylinders:        cylinders,
+		EfficiencyRatio:  efficiencyRatio,
 		CompressionRatio: compressionRatio,
 		BoostGainRatio:   boostGainRatio,
 		VE:               ve,

@@ -20,7 +20,7 @@ func NewAccelerator(engineRepo ports.EngineRepository, turboRepo ports.TurboRepo
 	}
 }
 
-func (a *Accelerator) Simulate(ctx context.Context, simulations []*models.Simulation) error {
+func (a *Accelerator) Simulate(ctx context.Context, file string, simulations []*models.Simulation) error {
 	var reports []*models.Report
 	for _, simulation := range simulations {
 		report, err := a.simulate(ctx, simulation)
@@ -31,7 +31,7 @@ func (a *Accelerator) Simulate(ctx context.Context, simulations []*models.Simula
 		reports = append(reports, report)
 	}
 
-	return a.reporter.Generate(ctx, reports)
+	return a.reporter.Generate(ctx, file, reports)
 }
 
 func (a *Accelerator) simulate(ctx context.Context, simulation *models.Simulation) (*models.Report, error) {
@@ -40,12 +40,15 @@ func (a *Accelerator) simulate(ctx context.Context, simulation *models.Simulatio
 		return nil, err
 	}
 
-	turbo, err := a.turboRepo.Get(ctx, simulation.Turbo)
-	if err != nil {
-		return nil, err
+	var turbo *models.Turbo
+	if simulation.Turbo != "" {
+		turbo, err = a.turboRepo.Get(ctx, simulation.Turbo)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	report := models.NewReport(engine, turbo, simulation.Boost)
+	report := models.NewReport(engine, turbo, simulation.Fuel, simulation.Boost)
 
 	for i := simulation.RevMin; i <= simulation.RevMax; i++ {
 		cfm := engine.Get(float64(i), simulation.Boost)

@@ -5,6 +5,7 @@ import (
 	"github.com/johnfercher/go-turbo/internal/adapters/csv"
 	"github.com/johnfercher/go-turbo/internal/adapters/pdf"
 	"github.com/johnfercher/go-turbo/internal/core/models"
+	"github.com/johnfercher/go-turbo/internal/core/models/fuel"
 	"github.com/johnfercher/go-turbo/internal/core/services"
 	"log"
 )
@@ -21,11 +22,15 @@ func main() {
 	simulations := []*models.Simulation{
 		{
 			Engine: "k20z3-si-2008",
-			Turbo:  "kinugawa-td05-18g",
-			Boost:  62,
 			RevMin: 3000,
 			RevMax: 9000,
-			Octane:
+			Fuel:   fuel.BRGasoline(),
+		},
+		{
+			Engine: "k20z3-si-2008",
+			RevMin: 3000,
+			RevMax: 9000,
+			Fuel:   fuel.BREthanol(),
 		},
 		/*{
 			Engine: "ej20g-wrx-1997",
@@ -33,10 +38,19 @@ func main() {
 			Boost:  100,
 			RevMin: 3000,
 			RevMax: 9000,
+			Fuel:   fuel.BRGasoline(),
+		},
+		{
+			Engine: "ej20g-wrx-1997",
+			Turbo:  "kinugawa-td05-18g",
+			Boost:  100,
+			RevMin: 3000,
+			RevMax: 9000,
+			Fuel:   fuel.BREthanol(),
 		},*/
 	}
 
-	err := accelerator.Simulate(ctx, simulations)
+	err := accelerator.Simulate(ctx, "si", simulations)
 	if err != nil {
 		log.Fatal(err)
 	}

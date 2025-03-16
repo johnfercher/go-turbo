@@ -6,5 +6,5 @@ import (
 )
 
 type Accelerator interface {
-	Simulate(ctx context.Context, simulations []*models.Simulation) error
+	Simulate(ctx context.Context, file string, simulations []*models.Simulation) error
 }

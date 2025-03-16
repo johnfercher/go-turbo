@@ -6,5 +6,5 @@ import (
 )
 
 type Reporter interface {
-	Generate(ctx context.Context, reports []*models.Report) error
+	Generate(ctx context.Context, file string, reports []*models.Report) error
 }
