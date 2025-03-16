@@ -18,6 +18,7 @@ func NewTurboRepository() *TurboRepository {
 
 func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Turbo, error) {
 	fileName := TurboFilePath(turboFile)
+
 	b, err := os.ReadFile(fileName)
 	if err != nil {
 		return nil, err
@@ -34,6 +35,7 @@ func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Tu
 	turbo := matrix.InitMatrix(200, maxFlow)
 	turbo = matrix.InterpolateLimitsY(turbo, data)
 	turbo = matrix.NormalizeWeights(turbo)
+	//turbo = matrix.InterpolateCurves(turbo)
 	turbo = matrix.InterpolateX(turbo)
 
 	return models.NewTurbo(turboFile, turbo), nil

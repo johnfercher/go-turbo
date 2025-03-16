@@ -1,6 +1,7 @@
 package matrix
 
 import (
+	"fmt"
 	"github.com/johnfercher/go-turbo/internal/core/models"
 	"gonum.org/v1/gonum/interp"
 )
@@ -116,6 +117,77 @@ func NormalizeWeights(turbo [][]float64) [][]float64 {
 	return turbo
 }
 
+func InterpolateCurves(turbo [][]float64) [][]float64 {
+	xSize := len(turbo)
+	ySize := len(turbo[0])
+
+	scores := make(map[string]float64)
+
+	for i := 0; i < ySize; i++ {
+		for j := 0; j < xSize; j++ {
+			key := fmt.Sprintf("%.2f", turbo[j][i])
+			_, ok := scores[key]
+			if !ok {
+				scores[key] = turbo[j][i]
+			}
+		}
+	}
+
+	fmt.Println(scores)
+
+	for scoreKey, score := range scores {
+		fmt.Println(scoreKey)
+		// Bottom half
+		inter := interp.AkimaSpline{}
+
+		var xs []float64
+		mapJ := make(map[int]bool)
+		var ys []float64
+		mapI := make(map[int]bool)
+
+		for i := 0; i < ySize/2.0; i++ {
+			for j := 0; j < xSize; j++ {
+				currentScore := fmt.Sprintf("%.2f", turbo[j][i])
+				if currentScore == scoreKey {
+					//fmt.Println(turbo[j][i])
+					_, findI := mapI[i]
+					if findI {
+						continue
+					}
+
+					_, findJ := mapJ[j]
+					if findJ {
+						continue
+					}
+
+					mapI[i] = true
+					mapJ[j] = true
+
+					xs = append(xs, float64(j))
+					ys = append(ys, float64(i))
+				}
+			}
+		}
+
+		if len(xs) < 2 && len(ys) < 2 {
+			continue
+		}
+
+		fmt.Println(xs, ys)
+
+		for i := 0; i < ySize; i++ {
+			err := inter.Fit(xs, ys)
+			if err == nil {
+				p := inter.Predict(float64(i))
+				turbo[int(p)][i] = score
+			}
+		}
+
+	}
+
+	return turbo
+}
+
 func InterpolateX(turbo [][]float64) [][]float64 {
 	xSize := len(turbo)
 	ySize := len(turbo[0])
@@ -135,11 +207,11 @@ func InterpolateX(turbo [][]float64) [][]float64 {
 			continue
 		}
 
-		min := 10000.0
-		minIndex := 0
-		max := 0.0
-		maxIndex := 0
-		for j := 0; j < xSize; j++ {
+		//min := 10000.0
+		//minIndex := 0
+		//max := 0.0
+		//maxIndex := 0
+		/*for j := 0; j < xSize; j++ {
 			if turbo[j][i] > max && turbo[j][i] != 0 {
 				maxIndex = j
 			}
@@ -147,14 +219,14 @@ func InterpolateX(turbo [][]float64) [][]float64 {
 				min = turbo[j][i]
 				minIndex = j
 			}
-		}
+		}*/
 
 		err := inter.Fit(xs, ys)
 		if err == nil {
 			for j := 0; j < xSize; j++ {
-				if j >= minIndex && j <= maxIndex {
-					turbo[j][i] = inter.Predict(float64(j))
-				}
+				//if j >= minIndex && j <= maxIndex {
+				turbo[j][i] = inter.Predict(float64(j))
+				//}
 			}
 		}
 	}

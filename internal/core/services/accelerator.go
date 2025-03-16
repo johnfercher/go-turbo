@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/johnfercher/go-turbo/internal/core/models"
 	"github.com/johnfercher/go-turbo/internal/core/ports"
-	"github.com/johnfercher/go-turbo/internal/math"
 )
 
 type Accelerator struct {
@@ -50,10 +49,13 @@ func (a *Accelerator) simulate(ctx context.Context, simulation *models.Simulatio
 
 	for i := simulation.RevMin; i <= simulation.RevMax; i++ {
 		cfm := engine.Get(float64(i), simulation.Boost)
-		health := turbo.Get(cfm.Flow, simulation.Boost)
-		lbs := math.CubicFeetToLbsMin(cfm.Flow)
 
-		report.Add(i, lbs, health)
+		var health = 0.0
+		if simulation.Boost > 0 {
+			health = turbo.Get(cfm.Flow, simulation.Boost)
+		}
+
+		report.Add(i, cfm.Flow, health)
 	}
 
 	return report, nil

@@ -20,33 +20,20 @@ func main() {
 
 	simulations := []*models.Simulation{
 		{
-			Engine: "ej20",
+			Engine: "k20z3-si-2008",
 			Turbo:  "kinugawa-td05-18g",
-			Boost:  80,
+			Boost:  62,
 			RevMin: 3000,
-			RevMax: 7500,
+			RevMax: 9000,
+			Octane:
 		},
-		{
-			Engine: "ej20",
+		/*{
+			Engine: "ej20g-wrx-1997",
 			Turbo:  "kinugawa-td05-18g",
 			Boost:  100,
 			RevMin: 3000,
-			RevMax: 7500,
-		},
-		{
-			Engine: "ej20",
-			Turbo:  "kinugawa-td05-18g",
-			Boost:  120,
-			RevMin: 3000,
-			RevMax: 7500,
-		},
-		{
-			Engine: "ej20",
-			Turbo:  "kinugawa-td05-18g",
-			Boost:  139,
-			RevMin: 3000,
-			RevMax: 7500,
-		},
+			RevMax: 9000,
+		},*/
 	}
 
 	err := accelerator.Simulate(ctx, simulations)

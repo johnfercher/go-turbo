@@ -6,9 +6,11 @@ import (
 )
 
 type EngineDetails struct {
-	Name      string  `json:"name"`
-	Liters    float64 `json:"liters"`
-	Cylinders int     `json:"cylinders"`
+	Name             string  `json:"name"`
+	Liters           float64 `json:"liters"`
+	Cylinders        int     `json:"cylinders"`
+	BoostGainRatio   float64 `json:"boost_gain_ratio"`
+	CompressionRatio float64 `json:"compression_ratio"`
 }
 
 type TurboPressureDAO struct {

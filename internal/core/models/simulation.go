@@ -6,4 +6,5 @@ type Simulation struct {
 	Boost  float64
 	RevMin int
 	RevMax int
+	Octane float64
 }

@@ -51,3 +51,18 @@ func TestAngleBetween(t *testing.T) {
 		assert.Equal(t, -135.0, AngleBetween(3, 3, 0, 0))
 	})
 }
+
+func TestEnvironmentAltitudePower(t *testing.T) {
+	t.Run("find correct power", func(t *testing.T) {
+		assert.Equal(t, 1.0, EnvironmentAltitudePower(0))
+		assert.Equal(t, 0.97, EnvironmentAltitudePower(300))
+		assert.Equal(t, 1.03, EnvironmentAltitudePower(-300))
+	})
+}
+
+func TestEnvironmentTemperaturePowerLoss(t *testing.T) {
+	t.Run("find correct power", func(t *testing.T) {
+		assert.Equal(t, 0.0, EnvironmentTemperaturePowerLoss(0))
+		assert.Equal(t, 1.0, EnvironmentTemperaturePowerLoss(7))
+	})
+}

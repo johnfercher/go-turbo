@@ -7,19 +7,23 @@ import (
 )
 
 type Engine struct {
-	Name      string
-	Liters    float64
-	Cylinders int
-	VE        []*VE
-	VEInter   interp.AkimaSpline
+	Name             string
+	Liters           float64
+	Cylinders        int
+	CompressionRatio float64
+	BoostGainRatio   float64
+	VE               []*VE
+	VEInter          interp.AkimaSpline
 }
 
-func NewEngine(name string, cylinders int, liters float64, ve []*VE) (*Engine, error) {
+func NewEngine(name string, cylinders int, liters float64, compressionRatio float64, boostGainRatio float64, ve []*VE) (*Engine, error) {
 	e := &Engine{
-		Name:      name,
-		Liters:    liters,
-		Cylinders: cylinders,
-		VE:        ve,
+		Name:             name,
+		Liters:           liters,
+		Cylinders:        cylinders,
+		CompressionRatio: compressionRatio,
+		BoostGainRatio:   boostGainRatio,
+		VE:               ve,
 	}
 
 	interp := interp.AkimaSpline{}

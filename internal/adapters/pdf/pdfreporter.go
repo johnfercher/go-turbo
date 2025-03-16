@@ -25,6 +25,7 @@ func NewPdfReporter() *pdfReporter {
 func (p *pdfReporter) Generate(ctx context.Context, reports []*models.Report) error {
 	cfg := config.NewBuilder().
 		WithPageSize(pagesize.A4).
+		WithMaxGridSize(16).
 		Build()
 
 	m := maroto.New(cfg)
@@ -48,8 +49,8 @@ func (p *pdfReporter) generate(ctx context.Context, m core.Maroto, report *model
 	matrix := p.ToTurboEfficiencyMatrix(ctx, report.Turbo.TurboScore)
 
 	m.AddRows(
-		row.New(200).Add(
-			chart.NewHeatMapCol(12, "Efficiency", matrix, props.HeatMap{
+		row.New(150).Add(
+			chart.NewHeatMapCol(16, "Efficiency", matrix, props.HeatMap{
 				TransparentValues: []int{0},
 				InvertScale:       false,
 				HalfColor:         false,
@@ -58,9 +59,9 @@ func (p *pdfReporter) generate(ctx context.Context, m core.Maroto, report *model
 	)
 
 	m.AddRow(5,
-		text.NewCol(4, report.Engine.Name),
-		text.NewCol(4, report.Turbo.Name),
-		text.NewCol(4, fmt.Sprintf("%.2f", report.Boost)),
+		text.NewCol(6, report.Engine.Name),
+		text.NewCol(6, report.Turbo.Name),
+		text.NewCol(6, fmt.Sprintf("%.2f", report.Boost)),
 	)
 
 	rng := 500
@@ -78,26 +79,49 @@ func (p *pdfReporter) generate(ctx context.Context, m core.Maroto, report *model
 
 	m.AddRows(rows...)
 
-	e := report.Entries.GetTop()
+	maxHP := report.Entries.GetMaxHP()
+	maxTorque := report.Entries.GetMaxTorque()
 
-	r := row.New(5).
-		Add(
-			text.NewCol(2, fmt.Sprintf("%d", e.RPM)),
-			text.NewCol(2, fmt.Sprintf("%.2f", e.LbsMin)),
-			text.NewCol(2, fmt.Sprintf("%.2f", e.Health)),
-			text.NewCol(3, fmt.Sprintf("(%.2f~%.2f)HP", e.MinHP, e.MaxHP)),
-			text.NewCol(3, fmt.Sprintf("(%.2f~%.2f)HP", e.MinHPE85, e.MaxHPE85)),
-		).WithStyle(
-		&props.Cell{
-			BackgroundColor: &props.Color{
-				Red:   100,
-				Green: 200,
-				Blue:  100,
+	m.AddRows(
+		row.New(5).
+			Add(
+				text.NewCol(2, fmt.Sprintf("%d", maxTorque.RPM)),
+				text.NewCol(2, fmt.Sprintf("%.2f", maxTorque.CFM)),
+				text.NewCol(2, fmt.Sprintf("%.2f", maxTorque.LbsMin)),
+				text.NewCol(2, fmt.Sprintf("%.2f", maxTorque.Health)),
+				text.NewCol(2, fmt.Sprintf("%.2f Kg", maxTorque.Crankshaft.Torque)),
+				text.NewCol(2, fmt.Sprintf("%.2f HP", maxTorque.Crankshaft.HP)),
+				text.NewCol(2, fmt.Sprintf("%.2f Kg", maxTorque.Crankshaft.ToE85().Torque)),
+				text.NewCol(2, fmt.Sprintf("%.2f HP", maxTorque.Crankshaft.ToE85().HP)),
+			).WithStyle(
+			&props.Cell{
+				BackgroundColor: &props.Color{
+					Red:   100,
+					Green: 100,
+					Blue:  200,
+				},
 			},
-		},
+		),
+		row.New(5).
+			Add(
+				text.NewCol(2, fmt.Sprintf("%d", maxHP.RPM)),
+				text.NewCol(2, fmt.Sprintf("%.2f", maxHP.CFM)),
+				text.NewCol(2, fmt.Sprintf("%.2f", maxHP.LbsMin)),
+				text.NewCol(2, fmt.Sprintf("%.2f", maxHP.Health)),
+				text.NewCol(2, fmt.Sprintf("%.2f Kg", maxHP.Crankshaft.Torque)),
+				text.NewCol(2, fmt.Sprintf("%.2f HP", maxHP.Crankshaft.HP)),
+				text.NewCol(2, fmt.Sprintf("%.2f Kg", maxHP.Crankshaft.ToE85().Torque)),
+				text.NewCol(2, fmt.Sprintf("%.2f HP", maxHP.Crankshaft.ToE85().HP)),
+			).WithStyle(
+			&props.Cell{
+				BackgroundColor: &props.Color{
+					Red:   100,
+					Green: 200,
+					Blue:  100,
+				},
+			},
+		),
 	)
-
-	m.AddRows(r)
 
 	return nil
 }
