@@ -51,7 +51,7 @@ func (a *Accelerator) simulate(ctx context.Context, simulation *models.Simulatio
 	report := models.NewReport(engine, turbo, simulation.Fuel, simulation.Boost)
 
 	for i := simulation.RevMin; i <= simulation.RevMax; i++ {
-		cfm := engine.Get(float64(i), simulation.Boost)
+		cfm := engine.GetCFM(float64(i), simulation.Boost)
 
 		var health = 0.0
 		if simulation.Boost > 0 {

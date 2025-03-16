@@ -59,8 +59,12 @@ func (e *Engine) String() string {
 	return s
 }
 
-func (e *Engine) Get(RPM float64, boost float64) *CFM {
+func (e *Engine) GetCFM(RPM float64, boost float64) *CFM {
 	percent := e.VEInter.Predict(RPM)
 	ve := NewVE(RPM, percent)
 	return ve.ToFourCylinderCFM(e.Liters).AddBoostKg(boost)
+}
+
+func (e *Engine) GetVE(RPM float64) float64 {
+	return e.VEInter.Predict(RPM)
 }

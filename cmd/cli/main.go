@@ -24,7 +24,7 @@ func main() {
 			Engine: "k20z3-si-2008",
 			RevMin: 3000,
 			RevMax: 9000,
-			Fuel:   fuel.BRGasoline(),
+			Fuel:   fuel.Gasoline100(),
 		},
 		{
 			Engine: "k20z3-si-2008",
