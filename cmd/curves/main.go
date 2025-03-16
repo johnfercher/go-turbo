@@ -15,18 +15,19 @@ func main() {
 	ctx := context.Background()
 	engineRepo := csv.NewEngineRepository()
 
-	engine, err := engineRepo.Get(ctx, "k20z3-si-2008")
+	engine, err := engineRepo.Get(ctx, "ej20g-wrx-1997")
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	boost := 100.0
 	minRPM := 2000.0
 	maxRPM := 9000.0
 	rpmRange := 200.0
 
 	VE(engine, minRPM, maxRPM, rpmRange)
-	Power(engine, minRPM, maxRPM, rpmRange)
-	Torque(engine, minRPM, maxRPM, rpmRange)
+	Power(engine, minRPM, maxRPM, rpmRange, boost)
+	Torque(engine, minRPM, maxRPM, rpmRange, boost)
 }
 
 func VE(engine *models.Engine, minRPM, maxRPM, rpmRange float64) {
@@ -39,10 +40,10 @@ func VE(engine *models.Engine, minRPM, maxRPM, rpmRange float64) {
 	os.WriteFile("ve.csv", []byte(chart), os.ModePerm)
 }
 
-func Power(engine *models.Engine, minRPM, maxRPM, rpmRange float64) {
+func Power(engine *models.Engine, minRPM, maxRPM, rpmRange, boost float64) {
 	var chart string
 	for rpm := minRPM; rpm < maxRPM; rpm += rpmRange {
-		cfm := engine.GetCFM(rpm, 0)
+		cfm := engine.GetCFM(rpm, boost)
 
 		lbsMin := math.CubicFeetToLbsMin(cfm.Flow)
 
@@ -53,10 +54,10 @@ func Power(engine *models.Engine, minRPM, maxRPM, rpmRange float64) {
 	os.WriteFile("power.csv", []byte(chart), os.ModePerm)
 }
 
-func Torque(engine *models.Engine, minRPM, maxRPM, rpmRange float64) {
+func Torque(engine *models.Engine, minRPM, maxRPM, rpmRange, boost float64) {
 	var chart string
 	for rpm := minRPM; rpm < maxRPM; rpm += rpmRange {
-		cfm := engine.GetCFM(rpm, 0)
+		cfm := engine.GetCFM(rpm, boost)
 
 		lbsMin := math.CubicFeetToLbsMin(cfm.Flow)
 

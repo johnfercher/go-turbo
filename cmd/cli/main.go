@@ -32,13 +32,21 @@ func main() {
 			RevMax: 9000,
 			Fuel:   fuel.BREthanol(),
 		},
-		/*{
+		{
+			Engine: "k20z3-si-2008",
+			Turbo:  "kinugawa-td05-18g",
+			Boost:  100,
+			RevMin: 3000,
+			RevMax: 9000,
+			Fuel:   fuel.BREthanol(),
+		},
+		{
 			Engine: "ej20g-wrx-1997",
 			Turbo:  "kinugawa-td05-18g",
 			Boost:  100,
 			RevMin: 3000,
 			RevMax: 9000,
-			Fuel:   fuel.BRGasoline(),
+			Fuel:   fuel.Gasoline100(),
 		},
 		{
 			Engine: "ej20g-wrx-1997",
@@ -47,7 +55,7 @@ func main() {
 			RevMin: 3000,
 			RevMax: 9000,
 			Fuel:   fuel.BREthanol(),
-		},*/
+		},
 	}
 
 	err := accelerator.Simulate(ctx, "si", simulations)

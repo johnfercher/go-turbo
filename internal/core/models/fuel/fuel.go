@@ -82,7 +82,7 @@ func BRPodiumGasoline() *Fuel {
 
 func BREthanol() *Fuel {
 	return &Fuel{
-		Name:       "BR Alcohol",
+		Name:       "BR Ethanol",
 		Octane:     110,
 		LatentHeat: 900,
 		AFRatio:    8.5, // Hidratado
