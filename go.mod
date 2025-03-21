@@ -4,7 +4,7 @@ go 1.23.3
 
 require (
 	github.com/gocarina/gocsv v0.0.0-20240520201108-78e41c74b4b1
-	github.com/johnfercher/maroto/v2 v2.3.1-chart18
+	github.com/johnfercher/maroto/v2 v2.3.1-chart19
 	github.com/stretchr/testify v1.10.0
 	gonum.org/v1/gonum v0.15.1
 )

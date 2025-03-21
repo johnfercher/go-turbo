@@ -7,6 +7,7 @@ import (
 	"github.com/johnfercher/maroto/v2/pkg/components/row"
 	"github.com/johnfercher/maroto/v2/pkg/components/text"
 	"github.com/johnfercher/maroto/v2/pkg/core"
+	"github.com/johnfercher/maroto/v2/pkg/core/entity"
 	"github.com/johnfercher/maroto/v2/pkg/props"
 )
 
@@ -73,6 +74,30 @@ func (r *Report) GetMaxTorque() *Entry {
 
 func (r *Report) GetGearEntries(gear int) Entries {
 	return r.gearEntries[gear]
+}
+
+func (r *Report) GetChangeGearBest() []entity.Label {
+	minSpeed := r.GetMinSpeed()
+	maxSpeed := r.GetMaxSpeed()
+
+	var labels []entity.Label
+	for j := 0; j < len(r.gearEntries)-1; j++ {
+		a := r.GetGearEntries(j)
+		b := r.GetGearEntries(j + 1)
+
+		for i := minSpeed; i < maxSpeed; i++ {
+			aRPM, aT := a.GetRPMTorqueInSpeed(i)
+			_, bT := b.GetRPMTorqueInSpeed(i)
+
+			if bT >= aT {
+				label := entity.NewLabel(fmt.Sprintf("%.0f / %.0f", aRPM, i), entity.NewPoint(i, bT))
+				labels = append(labels, label)
+				break
+			}
+		}
+	}
+
+	return labels
 }
 
 func (r *Report) GetMaxSpeed() float64 {
@@ -194,6 +219,15 @@ func (e Entries) GetMaxTorque() *Entry {
 	}
 
 	return e[maxIndex]
+}
+
+func (e Entries) GetRPMTorqueInSpeed(speed float64) (float64, float64) {
+	for _, entry := range e {
+		if entry.Speed >= speed {
+			return entry.RPM, entry.Crankshaft.Torque * entry.GearRatio
+		}
+	}
+	return 0, 0
 }
 
 type Power struct {

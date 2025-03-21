@@ -26,7 +26,7 @@ func main() {
 			RevMin: 3000,
 			RevMax: 9000,
 			Fuel:   fuel.Gasoline100(),
-		},*/
+		},
 		{
 			Engine:       "k20z3-si-2008",
 			Transmission: "si-2008",
@@ -38,6 +38,7 @@ func main() {
 			TireHeightMM: 45,
 			Fuel:         fuel.BREthanol(),
 		},
+		*/
 		{
 			Engine:       "ej20g-wrx-1997",
 			Transmission: "sti-6-TY856WB1AA",
@@ -47,7 +48,7 @@ func main() {
 			RevMax:       8500,
 			WheelInches:  17,
 			TireHeightMM: 45,
-			Fuel:         fuel.BREthanol(),
+			Fuel:         fuel.Gasoline100(),
 		},
 		/*{
 			Engine: "k20z3-si-2008",

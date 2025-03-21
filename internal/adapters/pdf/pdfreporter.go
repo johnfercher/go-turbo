@@ -210,6 +210,11 @@ func (p *pdfReporter) getSpeedTorque(report *models.Report) ([]entity.TimeSeries
 		timeSeries = append(timeSeries, entity.NewTimeSeries(Color(gear), points))
 	}
 
+	bestGears := report.GetChangeGearBest()
+	for i, gear := range bestGears {
+		timeSeries[i].Labels = append(timeSeries[i].Labels, gear)
+	}
+
 	return timeSeries, props
 }
 
