@@ -13,11 +13,13 @@ type Engine struct {
 	CompressionRatio float64
 	EfficiencyRatio  float64
 	BoostGainRatio   float64
+	MinRPM           float64
+	MaxRPM           float64
 	VE               []*VE
 	VEInter          interp.AkimaSpline
 }
 
-func NewEngine(name string, cylinders int, liters float64, efficiencyRatio float64, compressionRatio float64, boostGainRatio float64, ve []*VE) (*Engine, error) {
+func NewEngine(name string, cylinders int, liters float64, efficiencyRatio float64, compressionRatio float64, boostGainRatio float64, ve []*VE, minRPM float64, maxRPM float64) (*Engine, error) {
 	e := &Engine{
 		Name:             name,
 		Liters:           liters,
@@ -26,6 +28,8 @@ func NewEngine(name string, cylinders int, liters float64, efficiencyRatio float
 		CompressionRatio: compressionRatio,
 		BoostGainRatio:   boostGainRatio,
 		VE:               ve,
+		MinRPM:           minRPM,
+		MaxRPM:           maxRPM,
 	}
 
 	interp := interp.AkimaSpline{}

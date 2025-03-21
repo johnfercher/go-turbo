@@ -5,5 +5,7 @@
   "efficiency_ratio": 1.0,
   "boost_gain_ratio": 1.0,
   "compression_ratio": 8.0,
+  "min_rpm": 1000,
+  "max_rpm": 8000,
   "link": "https://www.supercars.net/blog/1998-subaru-impreza-wrx-sti-version-v-2"
 }

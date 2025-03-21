@@ -85,15 +85,22 @@ func (r *Report) GetChangeGearBest() []entity.Label {
 		a := r.GetGearEntries(j)
 		b := r.GetGearEntries(j + 1)
 
+		found := false
 		for i := minSpeed; i < maxSpeed; i++ {
-			aRPM, aT := a.GetRPMTorqueInSpeed(i)
-			_, bT := b.GetRPMTorqueInSpeed(i)
+			aRPM, aT, aF := a.GetRPMTorqueInSpeed(i)
+			_, bT, bF := b.GetRPMTorqueInSpeed(i)
 
-			if bT >= aT {
+			if aF && bF && bT >= aT {
+				found = true
 				label := entity.NewLabel(fmt.Sprintf("%.0f / %.0f", aRPM, i), entity.NewPoint(i, bT))
 				labels = append(labels, label)
 				break
 			}
+		}
+		if !found {
+			rpm, torque, speed := a.GetMaxRPMTorqueInSpeed()
+			label := entity.NewLabel(fmt.Sprintf("%.0f / %.0f", rpm, speed), entity.NewPoint(speed, torque))
+			labels = append(labels, label)
 		}
 	}
 
@@ -221,13 +228,19 @@ func (e Entries) GetMaxTorque() *Entry {
 	return e[maxIndex]
 }
 
-func (e Entries) GetRPMTorqueInSpeed(speed float64) (float64, float64) {
+func (e Entries) GetRPMTorqueInSpeed(speed float64) (float64, float64, bool) {
 	for _, entry := range e {
 		if entry.Speed >= speed {
-			return entry.RPM, entry.Crankshaft.Torque * entry.GearRatio
+			return entry.RPM, entry.Crankshaft.Torque * entry.GearRatio, true
 		}
 	}
-	return 0, 0
+	return 0, 0, false
+}
+
+func (e Entries) GetMaxRPMTorqueInSpeed() (float64, float64, float64) {
+	max := e[len(e)-1]
+
+	return max.RPM, max.Crankshaft.Torque * max.GearRatio, max.Speed
 }
 
 type Power struct {

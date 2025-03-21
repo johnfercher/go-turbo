@@ -43,6 +43,9 @@ func (a *Simulator) simulate(ctx context.Context, rpmIterator float64, car *mode
 		return nil, err
 	}
 
+	minRPM := engine.MinRPM
+	maxRPM := engine.MaxRPM
+
 	transmission, err := a.transmissionRepo.Get(ctx, car.Transmission)
 	if err != nil {
 		return nil, err
@@ -56,10 +59,10 @@ func (a *Simulator) simulate(ctx context.Context, rpmIterator float64, car *mode
 		}
 	}
 
-	report := models.NewReport(car.RevMin, car.RevMax, engine, turbo, transmission, car.Fuel, car.Boost)
+	report := models.NewReport(minRPM, maxRPM, engine, turbo, transmission, car.Fuel, car.Boost)
 
 	for gear := 0; gear < transmission.MaxGear(); gear++ {
-		for i := car.RevMin; i <= car.RevMax; i += rpmIterator {
+		for i := minRPM; i <= maxRPM; i += rpmIterator {
 			cfm := engine.GetCFM(float64(i), car.Boost)
 
 			var health = 0.0

@@ -9,7 +9,5 @@ type Car struct {
 	WheelInches  float64
 	TireHeightMM float64
 	Boost        float64
-	RevMin       float64
-	RevMax       float64
 	Fuel         *fuel.Fuel
 }

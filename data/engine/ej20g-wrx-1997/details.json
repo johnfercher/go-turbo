@@ -5,5 +5,7 @@
   "efficiency_ratio": 1.055,
   "boost_gain_ratio": 1.05,
   "compression_ratio": 8.0,
+  "min_rpm": 1000,
+  "max_rpm": 7200,
   "link": "https://www.ultimatespecs.com/car-specs/Subaru/5736/Subaru-Impreza-I-20-GT-Turbo-AWD.html"
 }

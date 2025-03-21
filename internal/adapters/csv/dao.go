@@ -12,6 +12,8 @@ type EngineDetails struct {
 	EfficiencyRatio  float64 `json:"efficiency_ratio"`
 	BoostGainRatio   float64 `json:"boost_gain_ratio"`
 	CompressionRatio float64 `json:"compression_ratio"`
+	MinRpm           float64 `json:"min_rpm"`
+	MaxRpm           float64 `json:"max_rpm"`
 }
 
 type TurboPressureDAO struct {

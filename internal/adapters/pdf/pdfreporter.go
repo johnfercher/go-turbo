@@ -81,20 +81,16 @@ func (p *pdfReporter) generate(ctx context.Context, m core.Maroto, report *model
 		m.AddRow(5)
 	}
 
-	torque := p.getTorque(report)
+	torque, torqueProps := p.getTorque(report)
 	maxTorque := report.GetMaxTorque()
-	hp := p.getHP(report)
+	hp, hpProps := p.getHP(report)
 	maxHP := report.GetMaxHP()
 
 	m.AddRows(
 		row.New(70).Add(
-			chart.NewTimeSeriesCol(7, torque, props.Chart{
-				XLabels: []float64{1000, 3000, 6000, 9000},
-			}),
+			chart.NewTimeSeriesCol(7, torque, torqueProps),
 			col.New(2),
-			chart.NewTimeSeriesCol(7, hp, props.Chart{
-				XLabels: []float64{1000, 3000, 6000, 9000},
-			}),
+			chart.NewTimeSeriesCol(7, hp, hpProps),
 		),
 	)
 
@@ -142,6 +138,8 @@ func (p *pdfReporter) generate(ctx context.Context, m core.Maroto, report *model
 
 	m.AddRows(p.getTransmission(report)...)
 
+	m.AddRows(m.AddRow(10))
+
 	return nil
 }
 
@@ -150,22 +148,34 @@ func (p *pdfReporter) getTransmission(report *models.Report) []core.Row {
 
 	// Header
 	rows := []core.Row{
-		row.New(5),
+		row.New(5).Add(col.New(16)),
 		row.New(5).Add(
 			text.NewCol(4, transmission.Name),
 			text.NewCol(4, fmt.Sprintf("Final(%f)", transmission.Final)),
 			text.NewCol(4, "Gear"),
 			text.NewCol(4, "Ratio"),
-		),
-	}
+		)}
 
 	// Gear ratio
 	for i, gear := range transmission.Gears {
-		rows = append(rows, row.New(5).Add(
-			text.NewCol(8, fmt.Sprintf("%d", i+1)),
-			text.NewCol(8, fmt.Sprintf("%f", gear)),
-		))
+		r := row.New(5).Add(
+			col.New(8),
+			text.NewCol(4, fmt.Sprintf("%d", i+1)),
+			text.NewCol(4, fmt.Sprintf("%f", gear)),
+		)
+		if i%2 == 0 {
+			r.WithStyle(&props.Cell{
+				BackgroundColor: &props.Color{
+					Red:   200,
+					Green: 200,
+					Blue:  200,
+				},
+			})
+		}
+		rows = append(rows, r)
 	}
+
+	rows = append(rows, row.New(5).Add(col.New(16)))
 
 	speedTorque, speedTorqueProps := p.getSpeedTorque(report)
 
@@ -181,18 +191,15 @@ func (p *pdfReporter) getSpeedTorque(report *models.Report) ([]entity.TimeSeries
 	var props props.Chart
 
 	maxSpeed := report.GetMaxSpeed()
-	minSpeed := report.GetMinSpeed()
+	stepSpeed := maxSpeed / 5
 
-	deltaSpeed := maxSpeed - minSpeed
-	pieceDelta := deltaSpeed / 5
-
-	for i := minSpeed; i <= maxSpeed; i += pieceDelta {
+	for i := 0.0; i <= maxSpeed; i += stepSpeed {
 		props.XLabels = append(props.XLabels, i)
 	}
 
 	maxTorque := report.GetMaxTorque().Crankshaft.Torque * report.Transmission.GetGearRatioFinal(0)
 	pieceTorque := maxTorque / 5
-	for i := 0.0; i < maxTorque; i += pieceTorque {
+	for i := 0.0; i <= maxTorque; i += pieceTorque {
 		props.YLabels = append(props.YLabels, i)
 	}
 
@@ -218,9 +225,17 @@ func (p *pdfReporter) getSpeedTorque(report *models.Report) ([]entity.TimeSeries
 	return timeSeries, props
 }
 
-func (p *pdfReporter) getHP(report *models.Report) []entity.TimeSeries {
+func (p *pdfReporter) getHP(report *models.Report) ([]entity.TimeSeries, props.Chart) {
 	var hpList []entity.TimeSeries
+	var props props.Chart
 	var hp = []entity.Point{}
+
+	maxRPM := report.MaxRPM
+	stepRPM := maxRPM / 5
+
+	for i := 0.0; i <= maxRPM; i += stepRPM {
+		props.XLabels = append(props.XLabels, i)
+	}
 
 	entries := report.GetGearEntries(0)
 	for _, entry := range entries {
@@ -238,12 +253,20 @@ func (p *pdfReporter) getHP(report *models.Report) []entity.TimeSeries {
 
 	hpList = append(hpList, hpTimeSeries)
 
-	return hpList
+	return hpList, props
 }
 
-func (p *pdfReporter) getTorque(report *models.Report) []entity.TimeSeries {
+func (p *pdfReporter) getTorque(report *models.Report) ([]entity.TimeSeries, props.Chart) {
 	var torqueList []entity.TimeSeries
+	var props props.Chart
 	var torque = []entity.Point{}
+
+	maxRPM := report.MaxRPM
+	stepRPM := maxRPM / 5
+
+	for i := 0.0; i <= maxRPM; i += stepRPM {
+		props.XLabels = append(props.XLabels, i)
+	}
 
 	entries := report.GetGearEntries(0)
 	for _, entry := range entries {
@@ -261,7 +284,7 @@ func (p *pdfReporter) getTorque(report *models.Report) []entity.TimeSeries {
 
 	torqueList = append(torqueList, torqueTimeSeries)
 
-	return torqueList
+	return torqueList, props
 }
 
 func (p *pdfReporter) ToTurboEfficiencyMatrix(ctx context.Context, turbo [][]float64) [][]int {
