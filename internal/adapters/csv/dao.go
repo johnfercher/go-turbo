@@ -6,9 +6,14 @@ import (
 )
 
 type EngineDetails struct {
-	Name      string  `json:"name"`
-	Liters    float64 `json:"liters"`
-	Cylinders int     `json:"cylinders"`
+	Name             string  `json:"name"`
+	Liters           float64 `json:"liters"`
+	Cylinders        int     `json:"cylinders"`
+	EfficiencyRatio  float64 `json:"efficiency_ratio"`
+	BoostGainRatio   float64 `json:"boost_gain_ratio"`
+	CompressionRatio float64 `json:"compression_ratio"`
+	MinRpm           float64 `json:"min_rpm"`
+	MaxRpm           float64 `json:"max_rpm"`
 }
 
 type TurboPressureDAO struct {
@@ -54,6 +59,7 @@ func (t TurboPressureDAO) IsEmpty() bool {
 func (t TurboPressureDAO) ToArray() *TurboPressureDAOArray {
 	tType := reflect.ValueOf(t)
 	arr := &TurboPressureDAOArray{}
+	arr.Flow = append(arr.Flow, "0")
 
 	for i := 0; i < tType.NumField(); i++ {
 		psi := tType.FieldByName("Kg")
@@ -68,6 +74,13 @@ func (t TurboPressureDAO) ToArray() *TurboPressureDAOArray {
 				arr.Flow = append(arr.Flow, s)
 			}
 		}
+	}
+
+	greaterValue := arr.Flow[len(arr.Flow)-1]
+	toFill := 16 - len(arr.Flow)
+
+	for i := 0; i < toFill; i++ {
+		arr.Flow = append(arr.Flow, greaterValue)
 	}
 
 	return arr

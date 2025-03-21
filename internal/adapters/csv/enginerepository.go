@@ -27,7 +27,9 @@ func (v *EngineRepository) Get(ctx context.Context, engine string) (*models.Engi
 		return nil, err
 	}
 
-	e, err := models.NewEngine(details.Name, details.Cylinders, details.Liters, ve)
+	e, err := models.NewEngine(details.Name, details.Cylinders, details.Liters,
+		details.EfficiencyRatio, details.CompressionRatio, details.BoostGainRatio,
+		ve, details.MinRpm, details.MaxRpm)
 	if err != nil {
 		return nil, err
 	}

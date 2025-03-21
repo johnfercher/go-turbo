@@ -1,13 +1,11 @@
 package csv
 
 import (
-	"bytes"
 	"context"
-	"github.com/gocarina/gocsv"
+	"fmt"
 	"github.com/johnfercher/go-turbo/internal/core/models"
-	"github.com/johnfercher/go-turbo/internal/sort"
+	"github.com/johnfercher/go-turbo/internal/matrix"
 	"os"
-	"strconv"
 	"strings"
 )
 
@@ -19,102 +17,80 @@ func NewTurboRepository() *TurboRepository {
 }
 
 func (t *TurboRepository) Get(ctx context.Context, turboFile string) (*models.Turbo, error) {
-	b, err := os.ReadFile("data/turbo/" + turboFile + ".csv")
+	fileName := TurboFilePath(turboFile)
+
+	b, err := os.ReadFile(fileName)
 	if err != nil {
 		return nil, err
 	}
 
-	var entries []*TurboPressureDAO
-	err = gocsv.Unmarshal(bytes.NewBuffer(b), &entries)
-	if err != nil {
-		return nil, err
-	}
+	data := Load(b)
 
-	valids := t.filterValids(entries)
-	arr := t.toArray(valids)
-	slices := t.getSlices(arr)
+	maxFlow := t.getMaxValue(data)
+	maxBoost := 200
+	padding := 50
+	maxFlow += padding
+	maxBoost += padding
 
-	return &models.Turbo{
-		Name:   turboFile,
-		Slices: slices,
-	}, nil
+	turbo := matrix.InitMatrix(200, maxFlow)
+	turbo = matrix.InterpolateLimitsY(turbo, data)
+	turbo = matrix.NormalizeWeights(turbo)
+	//turbo = matrix.InterpolateCurves(turbo)
+	turbo = matrix.InterpolateX(turbo)
+
+	return models.NewTurbo(turboFile, turbo), nil
 }
 
-func (t *TurboRepository) getSlices(arr []*TurboPressureDAOArray) map[string][]*models.Range {
-	slices := make(map[string][]*models.Range)
-	for _, slice := range arr {
-		var ranges []*models.Range
+func (t *TurboRepository) Save(ctx context.Context, name string, chart *models.Chart) error {
+	s := Turbo(chart.ToMatrix())
+	return os.WriteFile(TurboFilePath(name), []byte(s), os.ModePerm)
+}
 
-		// find base line, the better range
-		base := 0
-		for i, f := range slice.Flow {
-			if IsBaseRange(f) {
-				base = i
+func (t *TurboRepository) getMaxValue(data [][]string) int {
+	max := 0.0
+	for i := 0; i < len(data); i++ {
+		for j := 1; j < len(data[i]); j++ {
+			if models.IsBaseRange(data[i][j]) {
+				flow := models.GetFlowFromBaseRange(data[i][j])
+				if flow > max {
+					max = flow
+				}
+			}
+		}
+	}
+
+	return int(max)
+}
+
+func (t *TurboRepository) getMaxBoost(data [][]string) int {
+	max := 0
+	step := 0.2
+	for i := 0; i < len(data); i++ {
+		for j := 1; j < len(data[i]); j++ {
+			if models.IsBaseRange(data[i][j]) {
+				max = i
 				break
 			}
 		}
-
-		baseScore := GetScoreFromBaseRange(slice.Flow[base])
-
-		// Add base line, the better range
-		ranges = append(ranges, &models.Range{
-			Min:    GetFlowFromBaseRange(slice.Flow[base]),
-			Max:    GetFlowFromBaseRange(slice.Flow[base+1]),
-			Health: baseScore,
-			Boost:  baseScore,
-		})
-
-		// Add bottom half
-		for i := base; i > 0; i-- {
-			ranges = append(ranges, &models.Range{
-				Min: GetFlowFromBaseRange(slice.Flow[i-1]),
-				Max: GetFlowFromBaseRange(slice.Flow[i]),
-			})
-		}
-
-		// Surge bottom
-		ranges = append(ranges, &models.Range{
-			Min: 0,
-			Max: GetFlowFromBaseRange(slice.Flow[0]),
-		})
-
-		// Add top half
-		for i := base; i < len(slice.Flow)-2; i++ {
-			ranges = append(ranges, &models.Range{
-				Min: GetFlowFromBaseRange(slice.Flow[i+1]),
-				Max: GetFlowFromBaseRange(slice.Flow[i+2]),
-			})
-		}
-
-		// Choke top
-		ranges = append(ranges, &models.Range{
-			Min: GetFlowFromBaseRange(slice.Flow[len(slice.Flow)-1]),
-			Max: 10000,
-		})
-
-		ranges = sort.Merge(ranges)
-
-		kg, _ := strconv.ParseFloat(strings.TrimSpace(slice.Kg), 64)
-		slices[models.KgKey(kg)] = ranges
 	}
 
-	return slices
+	return int(100 * float64(max) * step)
 }
 
-func (t *TurboRepository) toArray(valids []*TurboPressureDAO) []*TurboPressureDAOArray {
-	var arr []*TurboPressureDAOArray
-	for _, entry := range valids {
-		arr = append(arr, entry.ToArray())
-	}
-	return arr
+func TurboFilePath(name string) string {
+	return fmt.Sprintf("data/turbo/%s.csv", name)
 }
 
-func (t *TurboRepository) filterValids(entries []*TurboPressureDAO) []*TurboPressureDAO {
-	var valids []*TurboPressureDAO
-	for _, entry := range entries {
-		if !entry.IsEmpty() {
-			valids = append(valids, entry)
+func Turbo(turbo [][]string) string {
+	s := "kg,col1,col2,col3,col4,col5,col6,col7,col8,col9,col10,col11,col12,col13,col14,col15,col16\n"
+
+	for i := 0; i < len(turbo); i++ {
+		var line []string
+		for j := 0; j < len(turbo[i]); j++ {
+			line = append(line, turbo[i][j])
 		}
+		s += strings.Join(line, ",") + "\n"
 	}
-	return valids
+
+	return s
 }

@@ -1,28 +1,31 @@
 package testutils
 
 import (
-	"github.com/johnfercher/go-turbo/internal/core/models"
+	"github.com/johnfercher/go-turbo/internal/matrix"
 	"math/rand"
 )
 
-func GenerateRandomRanges(n int) []models.Range {
-	var turboSlices []models.Range
+func RandomTurboMatrix(maxBoost, maxFlow int) [][]float64 {
+	m := matrix.InitMatrix(maxBoost, maxFlow)
+	maxRandom := rand.Intn(10)
 
-	bottom := 100.0
-	for i := 0; i < n; i++ {
-		offset := rand.Intn(100)
-		turboSlices = append(turboSlices, models.Range{
-			Min:   bottom,
-			Max:   bottom + float64(offset),
-			Score: float64(i),
-		})
-		bottom += float64(offset)
+	for i := 0; i < maxBoost; i++ {
+		for j := 0; j < maxFlow; j++ {
+			m[i][j] = float64(rand.Intn(maxRandom))
+		}
 	}
 
-	for i := 0; i < n; i++ {
-		ra := rand.Intn(n)
-		turboSlices[i], turboSlices[ra] = turboSlices[ra], turboSlices[i]
+	return m
+}
+
+func IncrementalTurboMatrix(maxBoost, maxFlow int) [][]float64 {
+	m := matrix.InitMatrix(maxBoost, maxFlow)
+
+	for i := 0; i < maxFlow; i++ {
+		for j := 0; j < maxBoost; j++ {
+			m[i][j] = float64(i + j)
+		}
 	}
 
-	return turboSlices
+	return m
 }

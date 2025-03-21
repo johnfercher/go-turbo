@@ -7,19 +7,29 @@ import (
 )
 
 type Engine struct {
-	Name      string
-	Liters    float64
-	Cylinders int
-	VE        []*VE
-	VEInter   interp.AkimaSpline
+	Name             string
+	Liters           float64
+	Cylinders        int
+	CompressionRatio float64
+	EfficiencyRatio  float64
+	BoostGainRatio   float64
+	MinRPM           float64
+	MaxRPM           float64
+	VE               []*VE
+	VEInter          interp.AkimaSpline
 }
 
-func NewEngine(name string, cylinders int, liters float64, ve []*VE) (*Engine, error) {
+func NewEngine(name string, cylinders int, liters float64, efficiencyRatio float64, compressionRatio float64, boostGainRatio float64, ve []*VE, minRPM float64, maxRPM float64) (*Engine, error) {
 	e := &Engine{
-		Name:      name,
-		Liters:    liters,
-		Cylinders: cylinders,
-		VE:        ve,
+		Name:             name,
+		Liters:           liters,
+		Cylinders:        cylinders,
+		EfficiencyRatio:  efficiencyRatio,
+		CompressionRatio: compressionRatio,
+		BoostGainRatio:   boostGainRatio,
+		VE:               ve,
+		MinRPM:           minRPM,
+		MaxRPM:           maxRPM,
 	}
 
 	interp := interp.AkimaSpline{}
@@ -53,8 +63,12 @@ func (e *Engine) String() string {
 	return s
 }
 
-func (e *Engine) Get(RPM float64, boost float64) *CFM {
+func (e *Engine) GetCFM(RPM float64, boost float64) *CFM {
 	percent := e.VEInter.Predict(RPM)
 	ve := NewVE(RPM, percent)
 	return ve.ToFourCylinderCFM(e.Liters).AddBoostKg(boost)
+}
+
+func (e *Engine) GetVE(RPM float64) float64 {
+	return e.VEInter.Predict(RPM)
 }
