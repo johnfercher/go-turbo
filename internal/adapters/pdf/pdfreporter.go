@@ -217,13 +217,9 @@ func (p *pdfReporter) getHP(report *models.Report) []entity.TimeSeries {
 	var hpList []entity.TimeSeries
 	var hp = []entity.Point{}
 
-	for i := report.MinRPM; i < report.MaxRPM; i += 100 {
-		cfm := report.Engine.GetCFM(float64(i), report.Boost)
-
-		lbsMin := math.CubicFeetToLbsMin(cfm.Flow)
-
-		power := models.NewPower(lbsMin, i, report.Fuel, report.Engine)
-		hp = append(hp, entity.NewPoint(i, power.HP))
+	entries := report.GetGearEntries(0)
+	for _, entry := range entries {
+		hp = append(hp, entity.NewPoint(entry.RPM, entry.Crankshaft.HP))
 	}
 
 	maxTorque := report.GetMaxHP()
@@ -231,7 +227,7 @@ func (p *pdfReporter) getHP(report *models.Report) []entity.TimeSeries {
 	power := models.NewPower(lbsMin, maxTorque.RPM, report.Fuel, report.Engine)
 
 	hpTimeSeries := entity.NewTimeSeries(Color(1), hp, entity.NewLabel("Max", entity.Point{
-		X: float64(maxTorque.RPM),
+		X: maxTorque.RPM,
 		Y: power.HP,
 	}))
 
@@ -243,13 +239,10 @@ func (p *pdfReporter) getHP(report *models.Report) []entity.TimeSeries {
 func (p *pdfReporter) getTorque(report *models.Report) []entity.TimeSeries {
 	var torqueList []entity.TimeSeries
 	var torque = []entity.Point{}
-	for i := 0.0; i < 9000; i += 100 {
-		cfm := report.Engine.GetCFM(i, report.Boost)
 
-		lbsMin := math.CubicFeetToLbsMin(cfm.Flow)
-
-		power := models.NewPower(lbsMin, i, report.Fuel, report.Engine)
-		torque = append(torque, entity.NewPoint(i, power.Torque))
+	entries := report.GetGearEntries(0)
+	for _, entry := range entries {
+		torque = append(torque, entity.NewPoint(entry.RPM, entry.Crankshaft.Torque))
 	}
 
 	maxTorque := report.GetMaxTorque()
@@ -257,7 +250,7 @@ func (p *pdfReporter) getTorque(report *models.Report) []entity.TimeSeries {
 	power := models.NewPower(lbsMin, maxTorque.RPM, report.Fuel, report.Engine)
 
 	torqueTimeSeries := entity.NewTimeSeries(Color(2), torque, entity.NewLabel("Max", entity.Point{
-		X: float64(maxTorque.RPM),
+		X: maxTorque.RPM,
 		Y: power.Torque,
 	}))
 
