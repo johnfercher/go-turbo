@@ -7,6 +7,7 @@ const (
 	FourCylinderConst   = 0.5
 	CubicFeetConversion = 1728
 	LitersToCID         = 0.01639344
+	milimetersToInch    = 0.0393701
 )
 
 func CubicInchToCubicFeet(inch float64) float64 {
@@ -17,10 +18,8 @@ func CubicFeetToLbsMin(cfm float64) float64 {
 	return cfm * 0.069
 }
 
-// https://calculator.academy/cfm-to-hp-calculator/
-func CubicFeetToHP(cfm float64) float64 {
-	efficiency := 0.55
-	return (cfm * 1.6) * 0.9 * efficiency
+func MilimetersToInch(milimeters float64) float64 {
+	return milimeters * milimetersToInch
 }
 
 func LitersToCubicInch(liters float64) float64 {
@@ -51,8 +50,8 @@ func RadianBetween(x1, y1, x2, y2 float64) float64 {
 	return math.Atan2(x2-x1, y2-y1)
 }
 
-func HorsepowerToTorque(horsePower float64, rpm int) float64 {
-	return horsePower / (float64(rpm) / 5252.0)
+func HorsepowerToTorque(horsePower float64, rpm float64) float64 {
+	return horsePower / (rpm / 5252.0)
 }
 
 func FootToKgfm(ft float64) float64 {

@@ -29,24 +29,67 @@ var whiteColor = &props.Color{
 }
 
 type Report struct {
-	Engine  *Engine
-	Turbo   *Turbo
-	Fuel    *fuel.Fuel
-	Boost   float64
-	Entries Entries
-	maxLbs  float64
+	MinRPM       float64
+	MaxRPM       float64
+	Engine       *Engine
+	Turbo        *Turbo
+	Transmission *Transmission
+	Fuel         *fuel.Fuel
+	Boost        float64
+	gearEntries  []Entries
+	maxLbs       float64
+	gear         int
 }
 
-func NewReport(engine *Engine, turbo *Turbo, fuel *fuel.Fuel, boost float64) *Report {
+func NewReport(minRPM float64, maxRPM float64, engine *Engine, turbo *Turbo, transmission *Transmission, fuel *fuel.Fuel, boost float64) *Report {
 	return &Report{
-		Engine: engine,
-		Turbo:  turbo,
-		Fuel:   fuel,
-		Boost:  boost,
+		MinRPM:       minRPM,
+		MaxRPM:       maxRPM,
+		Engine:       engine,
+		Turbo:        turbo,
+		Transmission: transmission,
+		Fuel:         fuel,
+		Boost:        boost,
+		gearEntries:  make([]Entries, transmission.MaxGear()),
+		gear:         0,
 	}
 }
 
-func (r *Report) Add(rpm int, cfm float64, health float64) {
+func (r *Report) GetMaxHP() *Entry {
+	if len(r.gearEntries) == 0 {
+		return nil
+	}
+
+	return r.gearEntries[0].GetMaxHP()
+}
+
+func (r *Report) GetMaxTorque() *Entry {
+	if len(r.gearEntries) == 0 {
+		return nil
+	}
+
+	return r.gearEntries[0].GetMaxTorque()
+}
+
+func (r *Report) GetGearEntries(gear int) Entries {
+	return r.gearEntries[gear]
+}
+
+func (r *Report) GetMaxSpeed() float64 {
+	lastGear := r.gearEntries[len(r.gearEntries)-1]
+	return lastGear[len(lastGear)-1].Speed
+}
+
+func (r *Report) GetMinSpeed() float64 {
+	firstGear := r.gearEntries[0]
+	return firstGear[0].Speed
+}
+
+func (r *Report) GetMaxGear() int {
+	return len(r.gearEntries)
+}
+
+func (r *Report) Add(rpm float64, cfm float64, health float64, wheelInch float64, tireHeight float64, speed int) {
 	lbsMin := math.CubicFeetToLbsMin(cfm)
 
 	power := NewPower(lbsMin, rpm, r.Fuel, r.Engine)
@@ -57,17 +100,32 @@ func (r *Report) Add(rpm int, cfm float64, health float64) {
 		CFM:        cfm,
 		Health:     health,
 		Crankshaft: power,
+		Speed:      r.Transmission.GetSpeed(rpm, wheelInch, tireHeight, speed),
+		Gear:       speed,
+		GearRatio:  r.Transmission.Gears[speed] * r.Transmission.Final,
 	}
 
-	r.Entries = append(r.Entries, e)
+	r.gearEntries[r.gear] = append(r.gearEntries[r.gear], e)
+}
+
+func (r *Report) NextGear() bool {
+	if r.gear < r.Transmission.MaxGear() {
+		r.gear++
+		return true
+	}
+
+	return false
 }
 
 type Entry struct {
-	RPM        int
+	RPM        float64
 	CFM        float64
 	LbsMin     float64
 	Health     float64
 	Crankshaft *Power
+	Speed      float64
+	Gear       int
+	GearRatio  float64
 }
 
 func (e Entry) GetHeader() core.Row {
@@ -87,7 +145,7 @@ func (e Entry) GetHeader() core.Row {
 
 func (e Entry) Values() []core.Col {
 	return []core.Col{
-		text.NewCol(2, fmt.Sprintf("%d", e.RPM)),
+		text.NewCol(2, fmt.Sprintf("%.0f", e.RPM)),
 		text.NewCol(2, fmt.Sprintf("%.2f", e.CFM)),
 		text.NewCol(3, fmt.Sprintf("%.2f", e.LbsMin)),
 		text.NewCol(3, fmt.Sprintf("%.2f", e.Health)),
@@ -143,8 +201,7 @@ type Power struct {
 	Torque float64
 }
 
-func NewPower(lbsMin float64, rpm int, f *fuel.Fuel, engine *Engine) *Power {
-
+func NewPower(lbsMin float64, rpm float64, f *fuel.Fuel, engine *Engine) *Power {
 	powerGain := f.Compare(fuel.Gasoline100())
 	hp := lbsMin * engine.CompressionRatio * powerGain * engine.EfficiencyRatio
 
